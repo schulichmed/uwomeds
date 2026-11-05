@@ -25,7 +25,7 @@ A council member allowed to edit the council pages (by default the President, Co
 _Avoid_: Content editor, CMS user
 
 **Booking admin**:
-A person who approves or declines room bookings for a campus; may be outside @meds.uwo.ca.
+Western's Facilities Assistance staff for a campus, who receive room booking requests and approve or decline them; they sign in with their @uwo.ca address. Not the IT Director.
 _Avoid_: Booking manager
 
 **IT Director**:

@@ -92,7 +92,7 @@ From [Choose how the build is carried out](https://github.com/nsimsam/hippo_webs
 1. **Outlook Safe Links pre-clicking the sign-in email** — Western mail scanners open links, and that would use up a one-time token. The email's link must open a page that needs a button press (POST) before verifying, and the 6-digit code must still work. Test: Task 3, `email link GET does not consume the code`.
 2. **Look-alike or messy email addresses** — `Jane@MEDS.uwo.ca ` and `x@UWO.CA` should be accepted after normalising. `x@meds.uwo.ca.evil.com`, `x@evilmeds.uwo.ca`, `x@evil-uwo.ca`, `x@uwo.ca.evil.com`, `x@eng.uwo.ca` and `x@gmail.com` (unless allowlisted) must be refused. Test: Task 2 pgTAP `domain_check`.
 3. **Daylight-saving and time-order mistakes in bookings** — times entered as Toronto local time must reach Google Calendar unchanged across DST, and an end before the start must be rejected. Test: Task 10 `bookingSchema` and Task 11 `toCalendarEvent`.
-4. **Campus "both" or a campus with no recipients set** — "both" emails the combined list once each (no duplicates). An empty list falls back to `hippoit@uwo.ca`, and the admin page shows a warning. Test: Task 8 `resolveRecipients`.
+4. **Campus "both" or a campus with no recipients set** — "both" emails the combined list once each (no duplicates). Booking requests go to Western's Facilities Assistance for that campus, never to the IT Director (Noor, 2026-11-05). An empty list sends no email: the request is still saved and listed on `/admin/bookings`, and the admin pages show a red warning until an address is added. Test: Task 8 `resolveRecipients`.
 5. **Access removed while someone is signed in** — an exec dropped from the uploaded roster, or a blocked user, must be refused on their next save even with a live session, and approving a booking twice must not create two calendar events. Tests: Task 4 pgTAP `removed_from_roster_cannot_update` and Task 11 `approve is idempotent`.
 6. **The MedFriend gate failing open** — every file under `/medfriend/*` (JSON and decks included) must be refused to a signed-out visitor, gated responses must never be cached publicly, and the Pages project must be set to fail closed. Tests: Task 26 `gate covers json and decks`, `no public cache`.
 7. **A security header that silently breaks a page, or a page that ships without one** — Cloudflare Pages doesn't apply `_headers` to responses from Functions, so server-rendered pages and the MedFriend gate must set the headers themselves; an Astro script inlined into the HTML is refused by the council policy; MedFriend's inline scripts and YouTube embeds must still work under its own policy. Tests: Task 30 `headers on static and server pages`, `no inline script in dist`, `no CSP violations`; Task 26 `medfriend policy`.
@@ -422,13 +422,13 @@ Numbered 30 so earlier references stay stable; built right after Task 3 so every
 **Interfaces:**
 - Produces:
   - `notification_recipients(id, list text check in ('booking_london','booking_windsor','club_event','contact'), email citext, unique(list,email))`. RLS: site_admin can write; booking_admin and site_admin can read. The first address on each booking list is also the privacy contact shown on the booking form (Task 23).
-  - `resolveRecipients(lists: RecipientRow[], campus: 'london'|'windsor'|'both'): { to: string[]; usedFallback: boolean }`. `both` returns the deduplicated union. An empty result returns `['hippoit@uwo.ca']` with `usedFallback: true`.
+  - `resolveRecipients(lists: RecipientRow[], campus: 'london'|'windsor'|'both'): { to: string[]; missing: boolean }`. `both` returns the deduplicated union. An empty result returns `{ to: [], missing: true }`; there is no fallback address.
   - `sendMail(env, msg: { to: string[]; subject: string; text: string; html?: string; replyTo?: string }): Promise<void>` POSTs to `https://api.brevo.com/v3/smtp/email` with header `api-key: env.BREVO_API_KEY` and sender `{ name: 'Hippocratic Council', email: 'noreply@uwomeds.com' }`. A non-2xx response throws. When `env.MAIL_MODE === 'supabase-only'` (the fake-data beta, before Brevo exists), it logs and returns without sending.
 
 - [ ] **Step 1:** Write `recipients.test.ts`:
   - london gets only the London list.
   - both, with overlapping lists, gets each address once.
-  - windsor with an empty list gets `['hippoit@uwo.ca']` and `usedFallback: true`.
+  - windsor with an empty list gets `[]` and `missing: true` (never `hippoit@uwo.ca`).
 - [ ] **Step 2:** Write `mail.test.ts` (mocked `fetch`): asserts the URL, `api-key` header, sender and `to` shape, and that a 400 throws.
 - [ ] **Step 3:** Write pgTAP: student1 can't read `notification_recipients`; booking admin can read but not write.
 - [ ] **Step 4:** Run `pnpm test && pnpm db:test`. Expected: FAIL.
