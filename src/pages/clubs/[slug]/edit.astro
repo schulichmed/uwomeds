@@ -30,6 +30,7 @@ const { club } = Astro.props as { club: Club };
 
       <fieldset id="campus-fieldset">
         <legend>Campus</legend>
+        <p id="campus-missing" class="warning-box" hidden>Your club's campus isn't set yet, so students filtering by campus won't find it. Choose London, Windsor or both.</p>
         <div class="choices">
           <label><input type="checkbox" name="campus" value="london" /> London</label>
           <label><input type="checkbox" name="campus" value="windsor" /> Windsor</label>
@@ -122,6 +123,7 @@ const { club } = Astro.props as { club: Club };
     document.querySelectorAll<HTMLInputElement>('input[name=campus]').forEach((cb) => {
       cb.checked = c.campuses.includes(cb.value as Campus);
     });
+    (document.getElementById('campus-missing') as HTMLElement).hidden = c.campuses.length > 0;
     links.innerHTML = (c.links.length ? c.links : ['']).map(linkRow).join('');
     execs.innerHTML = c.execs.map(execRow).join('');
 
@@ -168,7 +170,7 @@ const { club } = Astro.props as { club: Club };
       const campuses = Array.from(document.querySelectorAll<HTMLInputElement>('input[name=campus]:checked')).map(
         (cb) => cb.value as Campus,
       );
-      if (!campuses.length) problems.push('Choose at least one campus.');
+      if (!campuses.length) problems.push("Choose your club's campus: London, Windsor or both.");
       const urls = Array.from(links.querySelectorAll<HTMLInputElement>('.link-input'))
         .map((i) => i.value.trim())
         .filter(Boolean);
