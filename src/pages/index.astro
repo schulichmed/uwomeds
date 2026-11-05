@@ -1,15 +1,19 @@
 ---
 import Base from '../layouts/Base.astro';
+import EventsCalendar from '../components/EventsCalendar.astro';
 import { href } from '../lib/paths';
 ---
 <Base title="Home">
-  <section class="hero">
-    <h1>Schulich Hippocratic Council</h1>
-    <p>The medical student council for the London and Windsor campuses. Find a club, book a room for your event, and see what's on.</p>
-    <p class="button-row">
-      <a class="button" href={href('/clubs/')}>Find a club</a>
-      <a class="button secondary" href={href('/room-booking/')}>Book a room</a>
-    </p>
+  <section class="hero" slot="full-bleed" aria-labelledby="hero-h">
+    <div class="wrap hero-inner">
+      <h1 id="hero-h">Schulich Meds</h1>
+      <img class="hero-art" src={href('/hero-people.png')} alt="" width="1024" height="819" />
+    </div>
+  </section>
+
+  <section class="home-calendar" aria-label="Events calendar">
+    <p class="demo-note">Demo: the real site shows the council's Google Calendar here. This month view uses sample events and the bookings approved in this browser.</p>
+    <EventsCalendar />
   </section>
 
   <ul class="tiles">

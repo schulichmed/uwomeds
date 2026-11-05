@@ -2,6 +2,11 @@
 import DemoBanner from '../components/DemoBanner.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import { href } from '../lib/paths';
+// Rubik, the live site's typeface, self-hosted (Latin subset) so the demo makes no external requests.
+import '@fontsource/rubik/latin-400.css';
+import '@fontsource/rubik/latin-500.css';
+import '@fontsource/rubik/latin-700.css';
 import '../styles/global.css';
 
 interface Props { title: string; description?: string }
@@ -15,16 +20,19 @@ const fullTitle = title === 'Home' ? 'Hippocratic Council (demo)' : `${title} | 
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
     <meta name="robots" content="noindex" />
-    <link rel="icon" type="image/svg+xml" href={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/favicon.svg`} />
+    <link rel="icon" type="image/png" href={href('/hippo-icon.png')} />
     <title>{fullTitle}</title>
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to main content</a>
     <DemoBanner />
     <Header />
-    <main id="main" class="wrap" tabindex="-1">
-      <div id="flash" class="flash" role="status" hidden></div>
-      <slot />
+    <main id="main" tabindex="-1">
+      <slot name="full-bleed" />
+      <div class="wrap">
+        <div id="flash" class="flash" role="status" hidden></div>
+        <slot />
+      </div>
     </main>
     <Footer />
     <script>

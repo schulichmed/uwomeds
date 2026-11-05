@@ -28,7 +28,7 @@ document.getElementById('reset-demo')?.addEventListener('click', () => {
   window.location.href = href('/');
 });
 
-// Header: Sign in / Sign out, My club, Admin
+// Header: Login / Sign out, My club, Admin
 const auth = document.getElementById('auth-area');
 if (auth && session) {
   const parts: string[] = [`<span class="signed-in-as">Signed in as <strong>${esc(session.name)}</strong></span>`];
@@ -37,7 +37,7 @@ if (auth && session) {
     parts.push(`<a href="${href(`/clubs/${session.clubSlug}/`)}">My club${club ? `: ${esc(club.name)}` : ''}</a>`);
   }
   if (isBookingAdmin(session)) parts.push(`<a href="${href('/admin/')}">Admin</a>`);
-  parts.push('<button type="button" class="button small light-outline" id="sign-out">Sign out</button>');
+  parts.push('<button type="button" class="button small" id="sign-out">Sign out</button>');
   auth.innerHTML = parts.join('');
   document.getElementById('sign-out')?.addEventListener('click', () => {
     signOut();
