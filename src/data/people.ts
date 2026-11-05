@@ -10,7 +10,7 @@ export const PERSONAS: Persona[] = [
     email: 'exec1@meds.uwo.ca',
     clubSlug: 'surgery-interest-group',
   },
-  { id: 'booking_admin', label: 'Booking admin', name: 'Sam Sample', email: 'bookingadmin@uwo.ca' },
+  { id: 'booking_admin', label: 'Facilities Assistance (bookings)', name: 'Sam Sample', email: 'bookingadmin@uwo.ca' },
   { id: 'page_editor', label: 'Page editor', name: 'Taylor Sample', email: 'editor@meds.uwo.ca' },
   {
     id: 'community_relations',
@@ -23,8 +23,8 @@ export const PERSONAS: Persona[] = [
 
 /** Campus-routed booking recipients (plan Task 8). Sample addresses only. */
 export const BOOKING_RECIPIENTS = {
-  london: ['london.bookings.sample@uwo.ca'],
-  windsor: ['windsor.bookings.sample@uwo.ca'],
+  london: ['facilities.london.sample@uwo.ca'],
+  windsor: ['facilities.windsor.sample@uwo.ca'],
 } as const;
 
 export const IT_CONTACT = 'hippoit@uwo.ca';
