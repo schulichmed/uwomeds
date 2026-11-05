@@ -9,7 +9,7 @@ export default defineConfig({
   use: { baseURL: 'http://localhost:4321', trace: 'retain-on-failure' },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
-    command: 'pnpm exec astro preview --port 4321',
+    command: 'pnpm exec wrangler pages dev dist --port 4321',
     url: 'http://localhost:4321/',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
