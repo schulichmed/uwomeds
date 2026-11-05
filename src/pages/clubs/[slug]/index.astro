@@ -1,0 +1,40 @@
+---
+import Base from '../../../layouts/Base.astro';
+import { SAMPLE_CLUBS } from '../../../data/clubs';
+import { clubPageHtml } from '../../../lib/render-club';
+import { href } from '../../../lib/paths';
+import type { Club } from '../../../lib/types';
+
+export function getStaticPaths() {
+  return SAMPLE_CLUBS.map((club) => ({ params: { slug: club.slug }, props: { club } }));
+}
+const { club } = Astro.props as { club: Club };
+---
+<Base title={club.name}>
+  <p class="muted"><a href={href('/clubs/')}>Club directory</a> / {club.name}</p>
+  <h1>{club.name}</h1>
+  <div id="club-body" data-slug={club.slug}>
+    <Fragment set:html={clubPageHtml(club, false)} />
+  </div>
+</Base>
+
+<script>
+  import { clubPageHtml } from '../../../lib/render-club';
+  import { canEditClub, getClub, getSession } from '../../../lib/store';
+
+  const body = document.getElementById('club-body') as HTMLElement;
+  const slug = body.dataset.slug ?? '';
+  const club = getClub(slug);
+  if (club) body.innerHTML = clubPageHtml(club, canEditClub(getSession(), slug));
+
+  body.addEventListener('click', (ev) => {
+    const button = (ev.target as HTMLElement).closest<HTMLButtonElement>('[data-ig-toggle]');
+    if (!button) return;
+    const panel = document.getElementById('ig-panel');
+    if (!panel) return;
+    const open = button.getAttribute('aria-expanded') === 'true';
+    panel.hidden = open;
+    button.setAttribute('aria-expanded', String(!open));
+    button.textContent = open ? 'Show recent Instagram posts' : 'Hide recent Instagram posts';
+  });
+</script>

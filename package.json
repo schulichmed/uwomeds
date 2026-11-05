@@ -1,0 +1,24 @@
+{
+  "name": "uwomeds-demo",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.34.9",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro check && astro build",
+    "preview": "astro preview",
+    "check-links": "node scripts/check-base.mjs"
+  },
+  "dependencies": {
+    "@astrojs/check": "0.9.12",
+    "astro": "5.18.2",
+    "typescript": "5.9.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp"
+    ]
+  }
+}

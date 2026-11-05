@@ -1,0 +1,33 @@
+---
+import Base from '../../layouts/Base.astro';
+---
+<Base title="Admin">
+  <div id="admin-root"><p class="muted">Checking who you're signed in as...</p></div>
+</Base>
+
+<script>
+  import { requireSignIn, showForbidden } from '../../lib/gate';
+  import { href } from '../../lib/paths';
+  import { isBookingAdmin, isPageEditor, listBookings } from '../../lib/store';
+
+  const root = document.getElementById('admin-root') as HTMLElement;
+  const session = requireSignIn();
+  if (session && !isBookingAdmin(session)) {
+    showForbidden(root, 'This area is for booking admins and the IT Director.', `You're signed in as ${session.email}.`);
+  } else if (session) {
+    const pending = listBookings().filter((b) => b.status === 'pending').length;
+    const items = [
+      `<li class="tile"><h2><a href="${href('/admin/bookings/')}">Bookings</a></h2><p>${pending} waiting for a decision.</p></li>`,
+    ];
+    if (session.role === 'site_admin') {
+      items.push(
+        `<li class="tile"><h2>People and roles</h2><p class="muted">Assign booking admins and page editors, manage approved outside emails. Not in this demo.</p></li>`,
+        `<li class="tile"><h2>Clubs and exec roster</h2><p class="muted">Upload the exec roster each year. Not in this demo.</p></li>`,
+      );
+    }
+    if (isPageEditor(session)) {
+      items.push(`<li class="tile"><h2><a href="${href('/wellness/')}">Council pages</a></h2><p>Open any council page and choose Edit.</p></li>`);
+    }
+    root.innerHTML = `<h1>Admin</h1><ul class="tiles">${items.join('')}</ul>`;
+  }
+</script>

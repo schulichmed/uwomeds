@@ -1,0 +1,23 @@
+---
+import Base from '../layouts/Base.astro';
+import { href } from '../lib/paths';
+---
+<Base title="MedFriend">
+  <h1>MedFriend</h1>
+  <p class="lead">Preclerkship lecture notes, a question bank and Anki decks, made by Schulich students for Western students.</p>
+  <ul>
+    <li>Open to anyone with a Western email (@meds.uwo.ca or @uwo.ca).</li>
+    <li>Your progress is saved to your account, so it follows you between devices.</li>
+    <li>Student-made: not official Schulich curriculum or medical advice.</li>
+  </ul>
+  <p><a class="button" id="medfriend-signin" href={href('/login/?next=/medfriend/')}>Sign in with your Western email</a></p>
+  <p class="demo-note" id="medfriend-signed-in" hidden>Demo: you're signed in. On the real site, MedFriend's notes, questions and decks open here. No course content is included in this demo.</p>
+</Base>
+
+<script>
+  import { getSession } from '../lib/store';
+  if (getSession()) {
+    (document.getElementById('medfriend-signin') as HTMLElement).hidden = true;
+    (document.getElementById('medfriend-signed-in') as HTMLElement).hidden = false;
+  }
+</script>

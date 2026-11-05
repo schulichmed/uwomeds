@@ -1,0 +1,6 @@
+---
+import { href } from '../lib/paths';
+interface Props { contact: string; id?: string }
+const { contact, id } = Astro.props;
+---
+<p class="privacy-notice">How we use this: <a href={href('/privacy/')}>uwomeds.com/privacy</a>. Questions: <span id={id}>{contact}</span></p>

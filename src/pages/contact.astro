@@ -1,0 +1,40 @@
+---
+import Base from '../layouts/Base.astro';
+import PrivacyNotice from '../components/PrivacyNotice.astro';
+import { IT_CONTACT } from '../data/people';
+---
+<Base title="Contact">
+  <div id="contact-root">
+    <h1>Contact</h1>
+    <p class="lead">Questions for the Hippocratic Council.</p>
+    <form id="contact-form" class="stack" novalidate>
+      <div class="field"><label for="name">Your name</label><input type="text" id="name" autocomplete="name" /></div>
+      <div class="field"><label for="email">Your email</label><input type="email" id="email" autocomplete="email" /></div>
+      <div class="field" id="f-message">
+        <label for="message">Message</label>
+        <textarea id="message" aria-describedby="message-error"></textarea>
+        <p class="error" id="message-error" hidden>Write a message.</p>
+      </div>
+      <PrivacyNotice contact={IT_CONTACT} />
+      <button class="button" type="submit">Send message</button>
+    </form>
+  </div>
+</Base>
+
+<script>
+  const form = document.getElementById('contact-form') as HTMLFormElement;
+  form.addEventListener('submit', (ev) => {
+    ev.preventDefault();
+    const msg = document.getElementById('message') as HTMLTextAreaElement;
+    if (!msg.value.trim()) {
+      (document.getElementById('message-error') as HTMLElement).hidden = false;
+      msg.setAttribute('aria-invalid', 'true');
+      document.getElementById('f-message')?.classList.add('has-error');
+      msg.focus();
+      return;
+    }
+    const root = document.getElementById('contact-root') as HTMLElement;
+    root.innerHTML = '<h1 tabindex="-1">Thanks, message sent</h1><p class="demo-note">Demo: nothing was sent. On the real site this goes to the council by email and is not stored.</p>';
+    (root.querySelector('h1') as HTMLElement).focus();
+  });
+</script>

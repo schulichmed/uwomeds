@@ -1,0 +1,49 @@
+---
+import Base from '../../layouts/Base.astro';
+import PrivacyNotice from '../../components/PrivacyNotice.astro';
+import { IT_CONTACT } from '../../data/people';
+---
+<Base title="Sign in">
+  <h1>Sign in</h1>
+  <p class="lead">No password. We email you a 6-digit code.</p>
+  <form id="email-form" class="stack" novalidate>
+    <div class="field" id="email-field">
+      <label for="email">Western email</label>
+      <span class="hint" id="email-hint">@meds.uwo.ca or @uwo.ca</span>
+      <input type="email" id="email" name="email" autocomplete="email" inputmode="email" aria-describedby="email-hint email-error" required />
+      <p class="error" id="email-error" hidden></p>
+    </div>
+    <PrivacyNotice contact={IT_CONTACT} />
+    <button class="button" type="submit">Email me a code</button>
+  </form>
+  <p class="demo-note">Demo: sample addresses to try are <code>student1@meds.uwo.ca</code> (student), <code>exec1@meds.uwo.ca</code> (Sample Surgery Interest Group exec), <code>bookingadmin@uwo.ca</code>, <code>editor@meds.uwo.ca</code> and <code>hippoit@uwo.ca</code>. Any other @meds.uwo.ca or @uwo.ca address signs in as a student.</p>
+</Base>
+
+<script>
+  import { DOMAIN_ERROR, isAllowedEmail, normaliseEmail } from '../../lib/email-domain';
+  import { href } from '../../lib/paths';
+  import { startSignIn } from '../../lib/store';
+
+  const form = document.getElementById('email-form') as HTMLFormElement;
+  const input = document.getElementById('email') as HTMLInputElement;
+  const error = document.getElementById('email-error') as HTMLElement;
+  const field = document.getElementById('email-field') as HTMLElement;
+  const next = new URLSearchParams(window.location.search).get('next') ?? '';
+
+  form.addEventListener('submit', (ev) => {
+    ev.preventDefault();
+    const email = normaliseEmail(input.value);
+    if (!isAllowedEmail(email)) {
+      error.textContent = DOMAIN_ERROR;
+      error.hidden = false;
+      field.classList.add('has-error');
+      input.setAttribute('aria-invalid', 'true');
+      input.focus();
+      return;
+    }
+    startSignIn(email);
+    const params = new URLSearchParams();
+    if (next) params.set('next', next);
+    window.location.href = href(`/login/code/${params.size ? `?${params}` : ''}`);
+  });
+</script>

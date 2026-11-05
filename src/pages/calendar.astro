@@ -1,0 +1,84 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Events calendar">
+  <h1>Events calendar</h1>
+  <p class="lead">Council and club events on both campuses. Approved room bookings appear here automatically.</p>
+  <p class="demo-note">Demo: the real site shows the council's Google Calendar here (with subscribe instructions). This month view is drawn by the page from sample events and the bookings approved in this browser.</p>
+  <div class="cal-head">
+    <button type="button" class="button secondary small" id="prev-month">&larr; Previous</button>
+    <h2 id="month-label" aria-live="polite">Month</h2>
+    <button type="button" class="button secondary small" id="next-month">Next &rarr;</button>
+  </div>
+  <div class="cal-legend"><span>Calendar event</span><span class="auto-key">Approved booking (added automatically when approved)</span></div>
+  <div id="cal-grid" class="cal-grid"></div>
+  <h2>This month's events</h2>
+  <ul id="agenda" class="agenda"></ul>
+</Base>
+
+<script>
+  import { CAMPUS_LABEL, formatTime } from '../lib/booking';
+  import { esc } from '../lib/escape';
+  import { calendarEntries } from '../lib/store';
+
+  const entries = calendarEntries();
+  const now = new Date();
+  const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  let year = now.getFullYear();
+  let month = now.getMonth(); // 0-based
+
+  const grid = document.getElementById('cal-grid') as HTMLElement;
+  const label = document.getElementById('month-label') as HTMLElement;
+  const agenda = document.getElementById('agenda') as HTMLElement;
+  const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const key = (y: number, m: number, d: number) => `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+
+  function render(): void {
+    const first = new Date(year, month, 1);
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const lead = first.getDay();
+    const monthName = first.toLocaleString('en-CA', { month: 'long', year: 'numeric' });
+    label.textContent = monthName;
+    const cells: string[] = DOW.map((d) => `<div class="dow">${d}</div>`);
+    const totalCells = Math.ceil((lead + daysInMonth) / 7) * 7;
+    for (let i = 0; i < totalCells; i++) {
+      const date = new Date(year, month, i - lead + 1);
+      const k = key(date.getFullYear(), date.getMonth(), date.getDate());
+      const inMonth = date.getMonth() === month;
+      const dayEvents = entries.filter((e) => e.startsAt.slice(0, 10) === k);
+      const evHtml = dayEvents
+        .map(
+          (e) =>
+            `<span class="cal-event${e.fromBooking ? ' auto' : ''}" title="${esc(e.title)}${e.fromBooking ? ' (added automatically when approved)' : ''}">${esc(formatTime(e.startsAt))} ${esc(e.title)}</span>`,
+        )
+        .join('');
+      cells.push(
+        `<div class="cal-day${inMonth ? '' : ' other'}${k === todayKey ? ' today' : ''}"><span class="num">${date.getDate()}</span>${evHtml}</div>`,
+      );
+    }
+    grid.innerHTML = cells.join('');
+
+    const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+    const list = entries.filter((e) => e.startsAt.startsWith(monthKey));
+    agenda.innerHTML = list.length
+      ? list
+          .map((e) => {
+            const d = new Date(`${e.startsAt.slice(0, 10)}T12:00`);
+            return `<li><strong>${esc(e.title)}</strong><br>${esc(d.toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' }))}, ${esc(formatTime(e.startsAt))} to ${esc(formatTime(e.endsAt))} · ${esc(CAMPUS_LABEL[e.campus])}${e.location ? ` · ${esc(e.location)}` : ''}${e.fromBooking ? '<br><span class="auto-label">Added automatically when approved</span>' : ''}</li>`;
+          })
+          .join('')
+      : '<li class="muted">No events this month.</li>';
+  }
+
+  document.getElementById('prev-month')?.addEventListener('click', () => {
+    month--;
+    if (month < 0) { month = 11; year--; }
+    render();
+  });
+  document.getElementById('next-month')?.addEventListener('click', () => {
+    month++;
+    if (month > 11) { month = 0; year++; }
+    render();
+  });
+  render();
+</script>

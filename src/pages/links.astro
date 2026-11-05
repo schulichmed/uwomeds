@@ -1,0 +1,17 @@
+---
+import Base from '../layouts/Base.astro';
+const links = [
+  { id: 'elentra', label: 'Elentra', what: 'Course schedules and curriculum' },
+  { id: 'owl', label: 'OWL', what: "Western's learning platform" },
+  { id: 'western-email', label: 'Western Email', what: 'Your @uwo.ca and @meds.uwo.ca mail' },
+  { id: 'schulich-hub', label: 'Schulich Hub', what: 'School news and services' },
+  { id: 'western-libraries', label: 'Western Libraries', what: 'Library search and databases' },
+];
+---
+<Base title="Links">
+  <h1>Links</h1>
+  <p class="demo-note">Demo: the menu's Links go straight to these sites on the real site. The addresses are copied from the current site at the switch-over.</p>
+  <ul class="doc-list">
+    {links.map((l) => <li id={l.id}><strong>{l.label}</strong><br /><span class="muted">{l.what}</span></li>)}
+  </ul>
+</Base>

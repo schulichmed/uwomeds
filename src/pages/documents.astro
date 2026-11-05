@@ -1,0 +1,14 @@
+---
+import Base from '../layouts/Base.astro';
+import { SAMPLE_DOCUMENTS } from '../data/pages';
+import { href } from '../lib/paths';
+---
+<Base title="Documents">
+  <h1>Documents</h1>
+  <p class="notice">Looking for room booking? Go to <a href={href('/room-booking/')}>Event &amp; room booking</a>.</p>
+  <ul class="doc-list">
+    {SAMPLE_DOCUMENTS.map((d) => (
+      <li><strong>{d.title}</strong> <span class="muted">· {d.category}</span><br /><span class="muted">Demo: the PDF is added when the real documents are imported.</span></li>
+    ))}
+  </ul>
+</Base>

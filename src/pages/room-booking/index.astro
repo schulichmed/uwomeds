@@ -1,0 +1,247 @@
+---
+import Base from '../../layouts/Base.astro';
+import PrivacyNotice from '../../components/PrivacyNotice.astro';
+import { WINDSOR_ROOMS } from '../../data/rooms';
+import { BOOKING_RECIPIENTS } from '../../data/people';
+---
+<Base title="Event & room booking">
+  <div id="booking-root" hidden>
+    <h1>Event &amp; room booking</h1>
+    <p class="lead">Request a room for your event. A booking admin approves or declines it, and approved bookings go on the events calendar automatically.</p>
+    <p>Requesting as <strong id="requester"></strong>.</p>
+    <div id="form-errors" class="error-summary" role="alert" tabindex="-1" hidden></div>
+    <form id="booking-form" class="stack" novalidate>
+      <fieldset id="f-requestType">
+        <legend>Request type</legend>
+        <div class="choices">
+          <label><input type="radio" name="requestType" value="new" checked /> New booking</label>
+          <label><input type="radio" name="requestType" value="reschedule" /> Reschedule</label>
+          <label><input type="radio" name="requestType" value="cancellation" /> Cancellation</label>
+        </div>
+      </fieldset>
+
+      <div class="field" id="f-eventTitle">
+        <label for="eventTitle">Event title</label>
+        <input type="text" id="eventTitle" name="eventTitle" />
+      </div>
+
+      <div class="field" id="f-promoDescription">
+        <label for="promoDescription">Description of the event for calendar promotion</label>
+        <textarea id="promoDescription" name="promoDescription"></textarea>
+      </div>
+
+      <div class="field" id="f-startsAt">
+        <label for="startsAt">Start date and time</label>
+        <span class="hint">Toronto time</span>
+        <input type="datetime-local" id="startsAt" name="startsAt" />
+      </div>
+      <div class="field" id="f-endsAt">
+        <label for="endsAt">End date and time</label>
+        <span class="hint">Toronto time</span>
+        <input type="datetime-local" id="endsAt" name="endsAt" />
+      </div>
+
+      <fieldset id="f-yearsTargeted">
+        <legend>Years targeted</legend>
+        <div class="choices">
+          {[1, 2, 3, 4].map((y) => <label><input type="checkbox" name="yearsTargeted" value={y} /> Year {y}</label>)}
+        </div>
+      </fieldset>
+
+      <div class="field" id="f-publicDescription">
+        <label for="publicDescription">Public calendar description</label>
+        <span class="hint">Shown on the events calendar once approved.</span>
+        <textarea id="publicDescription" name="publicDescription"></textarea>
+      </div>
+
+      <fieldset id="f-eventType">
+        <legend>Event type</legend>
+        <div class="choices">
+          <label><input type="radio" name="eventType" value="in_person" checked /> In person</label>
+          <label><input type="radio" name="eventType" value="zoom_only" /> Zoom only</label>
+        </div>
+      </fieldset>
+
+      <fieldset id="f-campus">
+        <legend>Campus</legend>
+        <div class="choices">
+          <label><input type="radio" name="campus" value="london" checked /> London</label>
+          <label><input type="radio" name="campus" value="windsor" /> Windsor</label>
+          <label><input type="radio" name="campus" value="both" /> Both</label>
+        </div>
+      </fieldset>
+
+      <fieldset id="f-videoConference">
+        <legend>Is video conferencing needed?</legend>
+        <div class="choices">
+          <label><input type="radio" name="videoConference" value="no" checked /> No</label>
+          <label><input type="radio" name="videoConference" value="yes" /> Yes</label>
+        </div>
+      </fieldset>
+
+      <div class="field" id="f-zoomLink" data-show-when="vc">
+        <label for="zoomLink">Zoom link</label>
+        <input type="url" id="zoomLink" name="zoomLink" placeholder="https://" />
+      </div>
+
+      <div class="field" id="f-londonRoom" data-show-when="london">
+        <label for="londonRoom">London room</label>
+        <span class="hint">Which room you'd like, e.g. building and room number.</span>
+        <input type="text" id="londonRoom" name="londonRoom" />
+      </div>
+
+      <div class="field" id="f-windsorRoom" data-show-when="windsor">
+        <label for="windsorRoom">Windsor room</label>
+        <select id="windsorRoom" name="windsorRoom">
+          <option value="">Choose a room</option>
+          {WINDSOR_ROOMS.map((room) => <option value={room}>{room}</option>)}
+        </select>
+      </div>
+
+      <div class="field" id="f-attendeesLondon" data-show-when="london">
+        <label for="attendeesLondon">Expected number of attendees in London</label>
+        <input type="number" id="attendeesLondon" name="attendeesLondon" min="1" inputmode="numeric" />
+      </div>
+      <div class="field" id="f-attendeesWindsor" data-show-when="windsor">
+        <label for="attendeesWindsor">Expected number of attendees in Windsor</label>
+        <input type="number" id="attendeesWindsor" name="attendeesWindsor" min="1" inputmode="numeric" />
+      </div>
+
+      <div class="field" id="f-privateNotes">
+        <label for="privateNotes">Private notes for the booking and calendar managers</label>
+        <span class="hint">Not shown publicly.</span>
+        <textarea id="privateNotes" name="privateNotes"></textarea>
+      </div>
+
+      <PrivacyNotice contact={BOOKING_RECIPIENTS.london[0]} id="booking-contact" />
+      <button class="button" type="submit">Send booking request</button>
+    </form>
+  </div>
+</Base>
+
+<script>
+  import { validateBooking, type BookingErrors, type BookingInput } from '../../lib/booking';
+  import { BOOKING_RECIPIENTS } from '../../data/people';
+  import { esc } from '../../lib/escape';
+  import { requireSignIn } from '../../lib/gate';
+  import { href } from '../../lib/paths';
+  import { addBooking, nextBookingId } from '../../lib/store';
+  import type { Booking, BookingCampus } from '../../lib/types';
+
+  const session = requireSignIn();
+  if (session) {
+    (document.getElementById('booking-root') as HTMLElement).hidden = false;
+    (document.getElementById('requester') as HTMLElement).textContent = `${session.name} (${session.email})`;
+    const form = document.getElementById('booking-form') as HTMLFormElement;
+    const summary = document.getElementById('form-errors') as HTMLElement;
+    const contact = document.getElementById('booking-contact') as HTMLElement;
+
+    const radio = (name: string) => (form.querySelector(`input[name=${name}]:checked`) as HTMLInputElement | null)?.value ?? '';
+    const val = (id: string) => (document.getElementById(id) as HTMLInputElement).value;
+
+    function refresh(): void {
+      const campus = radio('campus');
+      const vc = radio('videoConference') === 'yes';
+      form.querySelectorAll<HTMLElement>('[data-show-when]').forEach((el) => {
+        const when = el.dataset.showWhen;
+        el.hidden = when === 'vc' ? !vc : !(campus === when || campus === 'both');
+      });
+      const contacts =
+        campus === 'both'
+          ? [BOOKING_RECIPIENTS.london[0], BOOKING_RECIPIENTS.windsor[0]]
+          : [BOOKING_RECIPIENTS[campus === 'windsor' ? 'windsor' : 'london'][0]];
+      contact.textContent = contacts.join(' and ');
+    }
+    form.addEventListener('change', refresh);
+    refresh();
+
+    form.addEventListener('submit', (ev) => {
+      ev.preventDefault();
+      const input: BookingInput = {
+        requestType: radio('requestType'),
+        eventTitle: val('eventTitle'),
+        promoDescription: val('promoDescription'),
+        publicDescription: val('publicDescription'),
+        startsAt: val('startsAt'),
+        endsAt: val('endsAt'),
+        yearsTargeted: Array.from(form.querySelectorAll<HTMLInputElement>('input[name=yearsTargeted]:checked')).map((c) => Number(c.value)),
+        eventType: radio('eventType'),
+        campus: radio('campus'),
+        videoConference: radio('videoConference') === 'yes',
+        zoomLink: val('zoomLink'),
+        londonRoom: val('londonRoom'),
+        windsorRoom: val('windsorRoom'),
+        attendeesLondon: val('attendeesLondon'),
+        attendeesWindsor: val('attendeesWindsor'),
+        privateNotes: val('privateNotes'),
+      };
+      const errors = validateBooking(input);
+      showErrors(errors);
+      if (Object.keys(errors).length) return;
+
+      const campus = input.campus as BookingCampus;
+      const london = campus !== 'windsor';
+      const windsor = campus !== 'london';
+      const booking: Booking = {
+        id: nextBookingId(),
+        requesterName: session.name,
+        requesterEmail: session.email,
+        requestType: input.requestType as Booking['requestType'],
+        eventTitle: input.eventTitle.trim(),
+        promoDescription: input.promoDescription.trim(),
+        publicDescription: input.publicDescription.trim(),
+        startsAt: input.startsAt,
+        endsAt: input.endsAt,
+        yearsTargeted: input.yearsTargeted,
+        eventType: input.eventType as Booking['eventType'],
+        campus,
+        videoConference: input.videoConference,
+        zoomLink: input.videoConference ? input.zoomLink.trim() : '',
+        londonRoom: london ? input.londonRoom.trim() : '',
+        windsorRoom: windsor ? input.windsorRoom : '',
+        attendeesLondon: london ? Number(input.attendeesLondon) : null,
+        attendeesWindsor: windsor ? Number(input.attendeesWindsor) : null,
+        privateNotes: input.privateNotes.trim(),
+        status: 'pending',
+        decisionNote: '',
+        decidedBy: '',
+        decidedAt: '',
+        createdAt: new Date().toISOString(),
+      };
+      addBooking(booking);
+      window.location.href = href(`/room-booking/thanks/?id=${encodeURIComponent(booking.id)}`);
+    });
+
+    function showErrors(errors: BookingErrors): void {
+      form.querySelectorAll('.error[data-generated]').forEach((e) => e.remove());
+      form.querySelectorAll('.has-error').forEach((e) => e.classList.remove('has-error'));
+      form.querySelectorAll('[aria-invalid]').forEach((e) => e.removeAttribute('aria-invalid'));
+      const entries = Object.entries(errors) as [string, string][];
+      if (!entries.length) {
+        summary.hidden = true;
+        return;
+      }
+      for (const [key, message] of entries) {
+        const wrap = document.getElementById(`f-${key}`);
+        if (!wrap) continue;
+        wrap.classList.add('has-error');
+        const p = document.createElement('p');
+        p.className = 'error';
+        p.dataset.generated = '';
+        p.id = `err-${key}`;
+        p.textContent = message;
+        wrap.appendChild(p);
+        const control = document.getElementById(key);
+        if (control) {
+          control.setAttribute('aria-invalid', 'true');
+          control.setAttribute('aria-describedby', p.id);
+        }
+      }
+      summary.innerHTML = `<h2>Please fix ${entries.length === 1 ? 'this' : `these ${entries.length} things`}</h2><ul>${entries
+        .map(([key, m]) => `<li><a href="#${document.getElementById(key) ? key : `f-${key}`}">${esc(m)}</a></li>`)
+        .join('')}</ul>`;
+      summary.hidden = false;
+      summary.focus();
+    }
+  }
+</script>

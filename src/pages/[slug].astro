@@ -1,0 +1,38 @@
+---
+import Base from '../layouts/Base.astro';
+import { COUNCIL_PAGES, type CouncilPage } from '../data/pages';
+import { renderMarkdown } from '../lib/markdown';
+
+export function getStaticPaths() {
+  return COUNCIL_PAGES.map((page) => ({ params: { slug: page.slug }, props: { page } }));
+}
+const { page } = Astro.props as { page: CouncilPage };
+---
+<Base title={page.title}>
+  <article id="council-page" data-slug={page.slug}>
+    <h1 id="page-title">{page.title}</h1>
+    <div id="page-tools" class="page-tools"></div>
+    <div id="page-body"><Fragment set:html={renderMarkdown(page.body)} /></div>
+  </article>
+</Base>
+
+<script>
+  import { esc } from '../lib/escape';
+  import { renderMarkdown } from '../lib/markdown';
+  import { href } from '../lib/paths';
+  import { getSession, isPageEdited, isPageEditor, pageVersions } from '../lib/store';
+
+  const article = document.getElementById('council-page') as HTMLElement;
+  const slug = article.dataset.slug ?? '';
+  const versions = pageVersions(slug);
+  const current = versions[versions.length - 1];
+  if (current && isPageEdited(slug)) {
+    (document.getElementById('page-title') as HTMLElement).textContent = current.title;
+    (document.getElementById('page-body') as HTMLElement).innerHTML = renderMarkdown(current.body);
+  }
+  if (isPageEditor(getSession())) {
+    const last = current ? new Date(current.savedAt).toLocaleDateString('en-CA', { dateStyle: 'medium' }) : '';
+    (document.getElementById('page-tools') as HTMLElement).innerHTML =
+      `<a class="button small" href="${href(`/edit/page/${slug}/`)}">Edit this page</a> <span class="muted">Last saved ${esc(last)} by ${esc(current?.savedBy ?? '')}</span>`;
+  }
+</script>

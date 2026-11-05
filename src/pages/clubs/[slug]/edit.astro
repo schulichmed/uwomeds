@@ -1,0 +1,204 @@
+---
+import Base from '../../../layouts/Base.astro';
+import PrivacyNotice from '../../../components/PrivacyNotice.astro';
+import { SAMPLE_CLUBS } from '../../../data/clubs';
+import { IT_CONTACT } from '../../../data/people';
+import { href } from '../../../lib/paths';
+import type { Club } from '../../../lib/types';
+
+export function getStaticPaths() {
+  return SAMPLE_CLUBS.map((club) => ({ params: { slug: club.slug }, props: { club } }));
+}
+const { club } = Astro.props as { club: Club };
+---
+<Base title={`Edit ${club.name}`}>
+  <div id="edit-root" data-slug={club.slug}>
+    <p class="muted">Checking who you're signed in as...</p>
+  </div>
+
+  <template id="edit-template">
+    <p class="muted"><a href={href(`/clubs/${club.slug}/`)}>{club.name}</a> / Edit</p>
+    <h1>Edit {club.name}</h1>
+    <p class="lead">You're on this club's exec roster, so you can edit this page. Changes show on the public page as soon as you save.</p>
+    <div id="form-errors" class="error-summary" role="alert" tabindex="-1" hidden></div>
+    <form id="club-form" class="stack" novalidate>
+      <div class="field">
+        <label for="description">Description</label>
+        <span class="hint" id="description-hint">What your club does and who it's for. Up to 5000 characters. Leave a blank line between paragraphs.</span>
+        <textarea id="description" maxlength="5000" aria-describedby="description-hint"></textarea>
+      </div>
+
+      <fieldset id="campus-fieldset">
+        <legend>Campus</legend>
+        <div class="choices">
+          <label><input type="checkbox" name="campus" value="london" /> London</label>
+          <label><input type="checkbox" name="campus" value="windsor" /> Windsor</label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Social links</legend>
+        <span class="hint">Paste up to 6 profile links. We recognise Instagram, Facebook, TikTok, LinkedIn, YouTube and Linktree; anything else shows as a website link.</span>
+        <div id="links"></div>
+        <button type="button" class="button secondary small" id="add-link">Add a link</button>
+      </fieldset>
+
+      <fieldset>
+        <legend>Executive team</legend>
+        <span class="hint">Emails stay hidden unless that exec ticks "Show my email on the club page".</span>
+        <div id="execs"></div>
+        <button type="button" class="button secondary small" id="add-exec">Add an exec</button>
+      </fieldset>
+
+      <PrivacyNotice contact={IT_CONTACT} />
+      <p class="button-row">
+        <button type="submit" class="button">Save</button>
+        <a href={href(`/clubs/${club.slug}/`)}>Cancel</a>
+      </p>
+    </form>
+  </template>
+</Base>
+
+<script>
+  import { esc } from '../../../lib/escape';
+  import { showForbidden } from '../../../lib/gate';
+  import { href } from '../../../lib/paths';
+  import { detectNetwork, isHttpUrl, networkIcon, NETWORK_LABEL } from '../../../lib/socials';
+  import { canEditClub, getClub, getSession, saveClub, setFlash } from '../../../lib/store';
+  import type { Campus, Club, ClubExec } from '../../../lib/types';
+
+  const MAX_LINKS = 6;
+  const MAX_EXECS = 30;
+  let execCounter = 0;
+  const root = document.getElementById('edit-root') as HTMLElement;
+  const slug = root.dataset.slug ?? '';
+  const session = getSession();
+  const club = getClub(slug);
+
+  if (!club || !canEditClub(session, slug)) {
+    showForbidden(
+      root,
+      "You can only edit your own club's page.",
+      session
+        ? `You're signed in as ${session.email}, who isn't on this club's exec roster.`
+        : "Sign in with the Western email that's on your club's exec roster.",
+    );
+  } else {
+    const tpl = document.getElementById('edit-template') as HTMLTemplateElement;
+    root.replaceChildren(tpl.content.cloneNode(true));
+    setUp(club);
+  }
+
+  function linkRow(url: string): string {
+    const network = url && isHttpUrl(url) ? detectNetwork(url) : 'website';
+    return `<div class="link-row">
+  <span class="link-icon" data-icon title="${NETWORK_LABEL[network]}">${networkIcon(network)}</span>
+  <input type="url" class="link-input" aria-label="Social link" placeholder="https://www.instagram.com/yourclub/" value="${esc(url)}" />
+  <button type="button" class="button danger small" data-remove-link>Remove</button>
+</div>`;
+  }
+
+  function execRow(e: ClubExec): string {
+    const n = ++execCounter;
+    return `<div class="exec-row">
+  <div><label for="exec-name-${n}">Name</label><input type="text" id="exec-name-${n}" class="exec-name" value="${esc(e.name)}" /></div>
+  <div><label for="exec-role-${n}">Role</label><input type="text" id="exec-role-${n}" class="exec-role" value="${esc(e.role)}" /></div>
+  <div class="full"><label for="exec-email-${n}">Email</label><input type="email" id="exec-email-${n}" class="exec-email" value="${esc(e.email)}" /></div>
+  <label class="full"><input type="checkbox" class="exec-show" ${e.showEmail ? 'checked' : ''} /> Show my email on the club page</label>
+  <div class="full"><button type="button" class="button danger small" data-remove-exec>Remove this exec</button></div>
+</div>`;
+  }
+
+  function setUp(c: Club): void {
+    const form = document.getElementById('club-form') as HTMLFormElement;
+    const description = document.getElementById('description') as HTMLTextAreaElement;
+    const links = document.getElementById('links') as HTMLElement;
+    const execs = document.getElementById('execs') as HTMLElement;
+    const addLink = document.getElementById('add-link') as HTMLButtonElement;
+    const addExec = document.getElementById('add-exec') as HTMLButtonElement;
+    const errors = document.getElementById('form-errors') as HTMLElement;
+
+    description.value = c.description;
+    document.querySelectorAll<HTMLInputElement>('input[name=campus]').forEach((cb) => {
+      cb.checked = c.campuses.includes(cb.value as Campus);
+    });
+    links.innerHTML = (c.links.length ? c.links : ['']).map(linkRow).join('');
+    execs.innerHTML = c.execs.map(execRow).join('');
+
+    const refreshLinkButton = () => {
+      addLink.disabled = links.querySelectorAll('.link-row').length >= MAX_LINKS;
+    };
+    refreshLinkButton();
+
+    links.addEventListener('input', (ev) => {
+      const input = ev.target as HTMLInputElement;
+      if (!input.classList.contains('link-input')) return;
+      const icon = input.parentElement?.querySelector('[data-icon]');
+      const network = isHttpUrl(input.value.trim()) ? detectNetwork(input.value.trim()) : 'website';
+      if (icon) {
+        icon.innerHTML = networkIcon(network);
+        icon.setAttribute('title', NETWORK_LABEL[network]);
+      }
+    });
+    links.addEventListener('click', (ev) => {
+      const btn = (ev.target as HTMLElement).closest('[data-remove-link]');
+      if (!btn) return;
+      btn.closest('.link-row')?.remove();
+      refreshLinkButton();
+    });
+    addLink.addEventListener('click', () => {
+      if (links.querySelectorAll('.link-row').length >= MAX_LINKS) return;
+      links.insertAdjacentHTML('beforeend', linkRow(''));
+      refreshLinkButton();
+      links.querySelector<HTMLInputElement>('.link-row:last-child input')?.focus();
+    });
+    execs.addEventListener('click', (ev) => {
+      const btn = (ev.target as HTMLElement).closest('[data-remove-exec]');
+      if (btn) btn.closest('.exec-row')?.remove();
+    });
+    addExec.addEventListener('click', () => {
+      if (execs.querySelectorAll('.exec-row').length >= MAX_EXECS) return;
+      execs.insertAdjacentHTML('beforeend', execRow({ name: '', role: '', email: '', showEmail: false }));
+      execs.querySelector<HTMLInputElement>('.exec-row:last-child .exec-name')?.focus();
+    });
+
+    form.addEventListener('submit', (ev) => {
+      ev.preventDefault();
+      const problems: string[] = [];
+      const campuses = Array.from(document.querySelectorAll<HTMLInputElement>('input[name=campus]:checked')).map(
+        (cb) => cb.value as Campus,
+      );
+      if (!campuses.length) problems.push('Choose at least one campus.');
+      const urls = Array.from(links.querySelectorAll<HTMLInputElement>('.link-input'))
+        .map((i) => i.value.trim())
+        .filter(Boolean);
+      urls.forEach((u) => {
+        if (!isHttpUrl(u)) problems.push(`"${u}" isn't a web link. Links must start with https:// or http://.`);
+      });
+      if (urls.length > MAX_LINKS) problems.push(`Add at most ${MAX_LINKS} social links.`);
+      if (description.value.length > 5000) problems.push('Keep the description to 5000 characters or fewer.');
+      const execList: ClubExec[] = Array.from(execs.querySelectorAll<HTMLElement>('.exec-row'))
+        .map((row) => ({
+          name: (row.querySelector('.exec-name') as HTMLInputElement).value.trim(),
+          role: (row.querySelector('.exec-role') as HTMLInputElement).value.trim(),
+          email: (row.querySelector('.exec-email') as HTMLInputElement).value.trim().toLowerCase(),
+          showEmail: (row.querySelector('.exec-show') as HTMLInputElement).checked,
+        }))
+        .filter((e) => e.name || e.role || e.email);
+      execList.forEach((e, i) => {
+        if (!e.name) problems.push(`Exec ${i + 1}: add a name.`);
+        if (e.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.email)) problems.push(`Exec ${i + 1}: check the email address.`);
+      });
+
+      if (problems.length) {
+        errors.innerHTML = `<h2>Please fix ${problems.length === 1 ? 'this' : 'these'}</h2><ul>${problems.map((p) => `<li>${esc(p)}</li>`).join('')}</ul>`;
+        errors.hidden = false;
+        errors.focus();
+        return;
+      }
+      const ok = saveClub({ ...c, description: description.value.trim(), campuses, links: urls, execs: execList });
+      setFlash(ok ? 'Saved. Your club page is updated.' : "Couldn't save: this browser is blocking storage.");
+      window.location.href = href(`/clubs/${c.slug}/`);
+    });
+  }
+</script>

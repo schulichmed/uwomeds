@@ -1,0 +1,130 @@
+---
+import Base from '../../../layouts/Base.astro';
+import { COUNCIL_PAGES, type CouncilPage } from '../../../data/pages';
+import { href } from '../../../lib/paths';
+
+export function getStaticPaths() {
+  return COUNCIL_PAGES.map((page) => ({ params: { slug: page.slug }, props: { page } }));
+}
+const { page } = Astro.props as { page: CouncilPage };
+---
+<Base title={`Edit ${page.title}`}>
+  <div id="edit-root" data-slug={page.slug}><p class="muted">Checking who you're signed in as...</p></div>
+  <template id="edit-template">
+    <p class="muted"><a href={href(`/${page.slug}/`)}>{page.title}</a> / Edit</p>
+    <h1>Edit page: {page.title}</h1>
+    <p class="lead">Every save keeps the earlier version, so you can always restore it from History.</p>
+    <form id="page-form" novalidate>
+      <div class="field">
+        <label for="title">Page title</label>
+        <input type="text" id="title" />
+      </div>
+      <div class="editor-grid">
+        <div class="field">
+          <label for="body">Text</label>
+          <span class="hint" id="body-hint">## Heading · **bold** · *italic* · - list item · [link text](https://...)</span>
+          <textarea id="body" aria-describedby="body-hint"></textarea>
+        </div>
+        <div>
+          <span class="label" id="preview-label">Preview</span>
+          <div id="preview" class="preview" aria-labelledby="preview-label" aria-live="off"></div>
+        </div>
+      </div>
+      <p class="button-row">
+        <button type="submit" class="button">Save</button>
+        <a href={href(`/${page.slug}/`)}>Cancel</a>
+      </p>
+    </form>
+    <section aria-labelledby="history-h">
+      <h2 id="history-h">History</h2>
+      <ul id="history" class="history"></ul>
+    </section>
+  </template>
+</Base>
+
+<script>
+  import { esc } from '../../../lib/escape';
+  import { requireSignIn, showForbidden } from '../../../lib/gate';
+  import { renderMarkdown } from '../../../lib/markdown';
+  import { href } from '../../../lib/paths';
+  import { isPageEditor, pageVersions, savePage, setFlash } from '../../../lib/store';
+
+  const root = document.getElementById('edit-root') as HTMLElement;
+  const slug = root.dataset.slug ?? '';
+  const session = requireSignIn();
+
+  if (session && !isPageEditor(session)) {
+    showForbidden(root, 'Only page editors can edit council pages.', `You're signed in as ${session.email}. Page editors are assigned by the IT Director.`);
+  } else if (session) {
+    const tpl = document.getElementById('edit-template') as HTMLTemplateElement;
+    root.replaceChildren(tpl.content.cloneNode(true));
+    const title = document.getElementById('title') as HTMLInputElement;
+    const body = document.getElementById('body') as HTMLTextAreaElement;
+    const preview = document.getElementById('preview') as HTMLElement;
+    const history = document.getElementById('history') as HTMLElement;
+
+    const load = () => {
+      const versions = pageVersions(slug);
+      const current = versions[versions.length - 1];
+      title.value = current?.title ?? '';
+      body.value = current?.body ?? '';
+      preview.innerHTML = renderMarkdown(body.value);
+      const fmt = (iso: string) => new Date(iso).toLocaleString('en-CA', { timeZone: 'America/Toronto', dateStyle: 'medium', timeStyle: 'short' });
+      history.innerHTML = versions
+        .map((v, i) => ({ v, i }))
+        .reverse()
+        .map(({ v, i }) => {
+          const isCurrent = i === versions.length - 1;
+          return `<li>
+  <strong>Version ${i + 1}</strong>${isCurrent ? ' <span class="pill pill-approved">Current</span>' : ''}<br>
+  <span class="muted">${esc(fmt(v.savedAt))} by ${esc(v.savedBy)}</span>
+  <p class="button-row">
+    <button type="button" class="button secondary small" data-preview="${i}" aria-expanded="false" aria-controls="vp-${i}">Preview</button>
+    ${isCurrent ? '' : `<button type="button" class="button small" data-restore="${i}">Restore</button>`}
+  </p>
+  <div class="version-preview" id="vp-${i}" hidden><h3>${esc(v.title)}</h3>${renderMarkdown(v.body)}</div>
+</li>`;
+        })
+        .join('');
+    };
+    load();
+
+    body.addEventListener('input', () => {
+      preview.innerHTML = renderMarkdown(body.value);
+    });
+
+    document.getElementById('page-form')?.addEventListener('submit', (ev) => {
+      ev.preventDefault();
+      savePage(slug, title.value.trim() || 'Untitled', body.value, session.email);
+      setFlash('Saved. The earlier version is kept in History.');
+      window.location.href = href(`/${slug}/`);
+    });
+
+    history.addEventListener('click', (ev) => {
+      const t = ev.target as HTMLElement;
+      const p = t.closest<HTMLButtonElement>('[data-preview]');
+      if (p) {
+        const panel = document.getElementById(`vp-${p.dataset.preview}`);
+        if (panel) {
+          panel.hidden = !panel.hidden;
+          p.setAttribute('aria-expanded', String(!panel.hidden));
+          p.textContent = panel.hidden ? 'Preview' : 'Hide preview';
+        }
+        return;
+      }
+      const r = t.closest<HTMLButtonElement>('[data-restore]');
+      if (r) {
+        const v = pageVersions(slug)[Number(r.dataset.restore)];
+        if (!v) return;
+        savePage(slug, v.title, v.body, `${session.email} (restored version ${Number(r.dataset.restore) + 1})`);
+        load();
+        const msg = document.createElement('div');
+        msg.className = 'flash';
+        msg.setAttribute('role', 'status');
+        msg.textContent = `Restored version ${Number(r.dataset.restore) + 1}. That restore is itself a new version, so it can be undone.`;
+        root.prepend(msg);
+        title.focus();
+      }
+    });
+  }
+</script>

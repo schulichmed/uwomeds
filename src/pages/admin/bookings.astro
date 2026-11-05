@@ -1,0 +1,105 @@
+---
+import Base from '../../layouts/Base.astro';
+---
+<Base title="Admin: bookings">
+  <div id="admin-root"><p class="muted">Checking who you're signed in as...</p></div>
+</Base>
+
+<script>
+  import { CAMPUS_LABEL, formatLocal, REQUEST_LABEL } from '../../lib/booking';
+  import { esc } from '../../lib/escape';
+  import { requireSignIn, showForbidden } from '../../lib/gate';
+  import { href } from '../../lib/paths';
+  import { decideBooking, isBookingAdmin, listBookings } from '../../lib/store';
+  import type { Booking, BookingStatus } from '../../lib/types';
+
+  const root = document.getElementById('admin-root') as HTMLElement;
+  const session = requireSignIn();
+  type Filter = BookingStatus | 'all';
+  let filter: Filter = 'pending';
+  let lastMessage = '';
+
+  if (session && !isBookingAdmin(session)) {
+    showForbidden(root, 'Only booking admins can see bookings.', `You're signed in as ${session.email}. Booking requests are private to the booking admins.`);
+  } else if (session) {
+    render();
+  }
+
+  function pill(status: BookingStatus): string {
+    const label = { pending: 'Pending', approved: 'Approved', declined: 'Declined' }[status];
+    return `<span class="pill pill-${status}">${label}</span>`;
+  }
+
+  function row(label: string, value: string): string {
+    return value ? `<dt>${esc(label)}</dt><dd>${esc(value)}</dd>` : '';
+  }
+
+  function card(b: Booking): string {
+    const rooms = [b.londonRoom && `London: ${b.londonRoom}`, b.windsorRoom && `Windsor: ${b.windsorRoom}`].filter(Boolean).join('; ');
+    const attendees = [b.attendeesLondon && `London ${b.attendeesLondon}`, b.attendeesWindsor && `Windsor ${b.attendeesWindsor}`].filter(Boolean).join(', ');
+    const decided =
+      b.status !== 'pending'
+        ? `<p class="muted">${b.status === 'approved' ? 'Approved' : 'Declined'} by ${esc(b.decidedBy)} on ${esc(new Date(b.decidedAt).toLocaleString('en-CA', { timeZone: 'America/Toronto', dateStyle: 'medium', timeStyle: 'short' }))}${b.decisionNote ? `. Note: "${esc(b.decisionNote)}"` : ''}</p>${
+            b.status === 'approved' ? `<p class="auto-label">On the events calendar: added automatically when approved. <a href="${href('/calendar/')}">View calendar</a></p>` : ''
+          }`
+        : `<div class="field"><label for="note-${esc(b.id)}">Note to the requester (optional)</label><textarea id="note-${esc(b.id)}" rows="2" style="min-height:60px"></textarea></div>
+<p class="button-row"><button type="button" class="button ok" data-decide="approved" data-id="${esc(b.id)}">Approve</button><button type="button" class="button danger" data-decide="declined" data-id="${esc(b.id)}">Decline</button></p>`;
+    return `<li class="booking-card" id="booking-${esc(b.id)}">
+  <p>${pill(b.status)} <span class="muted">${esc(REQUEST_LABEL[b.requestType])} · ${esc(CAMPUS_LABEL[b.campus])}</span></p>
+  <h2>${esc(b.eventTitle)}</h2>
+  <p>${esc(formatLocal(b.startsAt))} to ${esc(formatLocal(b.endsAt))}</p>
+  <dl>
+    ${row('Requested by', `${b.requesterName} (${b.requesterEmail})`)}
+    ${row('Event type', b.eventType === 'zoom_only' ? 'Zoom only' : 'In person')}
+    ${row('Rooms', rooms)}
+    ${row('Attendees', attendees)}
+    ${row('Years', b.yearsTargeted.map((y) => `Year ${y}`).join(', '))}
+    ${row('Video conference', b.videoConference ? `Yes: ${b.zoomLink}` : 'No')}
+    ${row('Promotion', b.promoDescription)}
+    ${row('Public description', b.publicDescription)}
+    ${row('Private notes', b.privateNotes)}
+  </dl>
+  ${decided}
+</li>`;
+  }
+
+  function render(): void {
+    const all = listBookings().slice().sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    const counts = { pending: 0, approved: 0, declined: 0 } as Record<BookingStatus, number>;
+    all.forEach((b) => counts[b.status]++);
+    const shown = filter === 'all' ? all : all.filter((b) => b.status === filter);
+    const tab = (f: Filter, label: string) =>
+      `<button type="button" class="button secondary small" data-filter="${f}" aria-pressed="${filter === f}">${label}</button>`;
+    root.innerHTML = `<h1>Bookings</h1>
+<p class="lead">Approve or decline room bookings. Approving adds the event to the events calendar automatically.</p>
+${lastMessage ? `<div class="flash" role="status" tabindex="-1">${lastMessage}</div>` : ''}
+<div class="tabs" role="group" aria-label="Show bookings">
+  ${tab('pending', `Pending (${counts.pending})`)}${tab('approved', `Approved (${counts.approved})`)}${tab('declined', `Declined (${counts.declined})`)}${tab('all', `All (${all.length})`)}
+</div>
+${shown.length ? `<ul class="booking-list">${shown.map(card).join('')}</ul>` : '<p class="notice">Nothing here. New requests show up under Pending.</p>'}`;
+  }
+
+  root.addEventListener('click', (ev) => {
+    const target = ev.target as HTMLElement;
+    const filterBtn = target.closest<HTMLButtonElement>('[data-filter]');
+    if (filterBtn) {
+      filter = filterBtn.dataset.filter as Filter;
+      lastMessage = '';
+      render();
+      return;
+    }
+    const decideBtn = target.closest<HTMLButtonElement>('[data-decide]');
+    if (!decideBtn || !session) return;
+    const id = decideBtn.dataset.id ?? '';
+    const decision = decideBtn.dataset.decide as 'approved' | 'declined';
+    const note = (document.getElementById(`note-${id}`) as HTMLTextAreaElement | null)?.value.trim() ?? '';
+    const b = decideBooking(id, decision, note, session.email);
+    if (!b) return;
+    lastMessage =
+      decision === 'approved'
+        ? `Approved "${esc(b.eventTitle)}". It's on the <a href="${href('/calendar/')}">events calendar</a> now, and ${esc(b.requesterEmail)} was emailed.`
+        : `Declined "${esc(b.eventTitle)}". ${esc(b.requesterEmail)} was emailed${note ? ' with your note' : ''}.`;
+    render();
+    (root.querySelector('.flash') as HTMLElement | null)?.focus();
+  });
+</script>

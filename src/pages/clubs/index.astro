@@ -1,0 +1,52 @@
+---
+import Base from '../../layouts/Base.astro';
+import { SAMPLE_CLUBS } from '../../data/clubs';
+import { clubCardHtml } from '../../lib/render-club';
+---
+<Base title="Club directory">
+  <h1>Club directory</h1>
+  <p class="lead">Clubs on the London and Windsor campuses. Each club's execs keep its page up to date.</p>
+  <form id="club-filters" class="club-filters" role="search">
+    <div class="field">
+      <label for="club-search">Search clubs</label>
+      <input type="search" id="club-search" placeholder="e.g. surgery" autocomplete="off" />
+    </div>
+    <fieldset>
+      <legend>Campus</legend>
+      <div class="choices">
+        <label><input type="radio" name="campus" value="" checked /> All</label>
+        <label><input type="radio" name="campus" value="london" /> London</label>
+        <label><input type="radio" name="campus" value="windsor" /> Windsor</label>
+      </div>
+    </fieldset>
+  </form>
+  <p id="club-count" class="muted" aria-live="polite">{SAMPLE_CLUBS.length} clubs</p>
+  <ul id="club-list" class="club-list">
+    <Fragment set:html={SAMPLE_CLUBS.map(clubCardHtml).join('')} />
+  </ul>
+</Base>
+
+<script>
+  import { clubCardHtml } from '../../lib/render-club';
+  import { listClubs } from '../../lib/store';
+
+  const list = document.getElementById('club-list') as HTMLUListElement;
+  const search = document.getElementById('club-search') as HTMLInputElement;
+  const count = document.getElementById('club-count') as HTMLElement;
+  document.getElementById('club-filters')?.addEventListener('submit', (ev) => ev.preventDefault());
+  list.innerHTML = listClubs().map(clubCardHtml).join('');
+
+  function apply(): void {
+    const q = search.value.trim().toLowerCase();
+    const campus = (document.querySelector('input[name=campus]:checked') as HTMLInputElement | null)?.value ?? '';
+    let shown = 0;
+    list.querySelectorAll<HTMLLIElement>('.club-card').forEach((li) => {
+      const ok = (!q || (li.dataset.name ?? '').includes(q)) && (!campus || (li.dataset.campuses ?? '').split(' ').includes(campus));
+      li.hidden = !ok;
+      if (ok) shown++;
+    });
+    count.textContent = shown === 1 ? '1 club' : `${shown} clubs`;
+  }
+  search.addEventListener('input', apply);
+  document.querySelectorAll('input[name=campus]').forEach((r) => r.addEventListener('change', apply));
+</script>

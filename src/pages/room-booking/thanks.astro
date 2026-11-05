@@ -1,0 +1,36 @@
+---
+import Base from '../../layouts/Base.astro';
+import { href } from '../../lib/paths';
+---
+<Base title="Booking request sent">
+  <div id="thanks-root">
+    <h1>Booking request sent</h1>
+    <p><a href={href('/room-booking/')}>Make a booking</a></p>
+  </div>
+</Base>
+
+<script>
+  import { CAMPUS_LABEL, formatLocal, REQUEST_LABEL, resolveRecipients } from '../../lib/booking';
+  import { esc } from '../../lib/escape';
+  import { href } from '../../lib/paths';
+  import { listBookings } from '../../lib/store';
+
+  const id = new URLSearchParams(window.location.search).get('id');
+  const b = listBookings().find((x) => x.id === id);
+  const root = document.getElementById('thanks-root') as HTMLElement;
+  if (b) {
+    const to = resolveRecipients(b.campus);
+    root.innerHTML = `<h1>Thanks, your booking request is in</h1>
+<div class="ok-box">
+  <p><strong>${esc(REQUEST_LABEL[b.requestType])}: ${esc(b.eventTitle)}</strong><br>${esc(formatLocal(b.startsAt))} to ${esc(formatLocal(b.endsAt))} · ${esc(CAMPUS_LABEL[b.campus])}</p>
+  <p><span class="pill pill-pending">Pending</span> A booking admin will approve or decline it, and you'll get an email either way.</p>
+</div>
+<h2>Who we notified</h2>
+<ul>
+  <li>The ${esc(CAMPUS_LABEL[b.campus] === 'Both campuses' ? 'London and Windsor' : CAMPUS_LABEL[b.campus])} booking ${to.length > 1 ? 'admins' : 'admin'}: ${to.map((e) => `<strong>${esc(e)}</strong>`).join(', ')}. They get a link to the bookings page only, not your event details.</li>
+  <li>You, at <strong>${esc(b.requesterEmail)}</strong>: a confirmation that repeats your details.</li>
+</ul>
+<p class="demo-note">Demo: no emails were sent. To see the next step, switch the <strong>Demo persona</strong> to <strong>Booking admin</strong> and open <a href="${href('/admin/bookings/')}">Admin: bookings</a>.</p>
+<p class="button-row"><a class="button" href="${href('/calendar/')}">See the events calendar</a> <a href="${href('/room-booking/')}">Make another booking</a></p>`;
+  }
+</script>

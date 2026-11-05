@@ -1,0 +1,50 @@
+---
+import Base from '../layouts/Base.astro';
+import PrivacyNotice from '../components/PrivacyNotice.astro';
+import { IT_CONTACT } from '../data/people';
+---
+<Base title="Report a problem">
+  <div id="report-root">
+    <h1>Report a problem</h1>
+    <p class="lead">Something broken or wrong on the website? Tell the IT Director.</p>
+    <form id="report-form" class="stack" novalidate>
+      <div class="field">
+        <label for="page">Which page?</label>
+        <input type="text" id="page" placeholder="e.g. the club directory" />
+      </div>
+      <div class="field" id="f-what">
+        <label for="what">What went wrong?</label>
+        <textarea id="what" aria-describedby="what-error"></textarea>
+        <p class="error" id="what-error" hidden>Tell us what went wrong.</p>
+      </div>
+      <div class="field">
+        <label for="reply">Your email, if you'd like to hear when it's fixed (optional)</label>
+        <input type="email" id="reply" autocomplete="email" />
+      </div>
+      <PrivacyNotice contact={IT_CONTACT} />
+      <button class="button" type="submit">Send report</button>
+    </form>
+  </div>
+</Base>
+
+<script>
+  import { nextReportNumber } from '../lib/store';
+  const form = document.getElementById('report-form') as HTMLFormElement;
+  form.addEventListener('submit', (ev) => {
+    ev.preventDefault();
+    const what = document.getElementById('what') as HTMLTextAreaElement;
+    const err = document.getElementById('what-error') as HTMLElement;
+    if (!what.value.trim()) {
+      err.hidden = false;
+      what.setAttribute('aria-invalid', 'true');
+      document.getElementById('f-what')?.classList.add('has-error');
+      what.focus();
+      return;
+    }
+    const n = nextReportNumber();
+    const root = document.getElementById('report-root') as HTMLElement;
+    root.innerHTML = `<h1>Thanks, report #${n} received</h1><div class="ok-box" role="status"><p>The IT Director will look at it. If you left your email, you'll hear back when it's fixed.</p></div><p class="demo-note">Demo: nothing was sent.</p>`;
+    (root.querySelector('h1') as HTMLElement).setAttribute('tabindex', '-1');
+    (root.querySelector('h1') as HTMLElement).focus();
+  });
+</script>

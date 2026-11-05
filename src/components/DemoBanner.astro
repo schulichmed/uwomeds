@@ -1,0 +1,16 @@
+---
+import { PERSONAS } from '../data/people';
+---
+<div class="demo-banner" role="region" aria-label="Demo notice">
+  <div class="wrap demo-banner-inner">
+    <p><strong>Demo with sample data.</strong> Nothing here is real or saved beyond this browser.</p>
+    <div class="demo-controls">
+      <label for="persona-select">Demo persona</label>
+      <select id="persona-select">
+        <option value="">Signed out</option>
+        {PERSONAS.map((p) => <option value={p.email}>{p.label}</option>)}
+      </select>
+      <button type="button" id="reset-demo" class="button small light">Reset demo</button>
+    </div>
+  </div>
+</div>
