@@ -1,5 +1,5 @@
 {
-  "name": "uwomeds-demo",
+  "name": "uwomeds",
   "type": "module",
   "version": "0.1.0",
   "private": true,
@@ -8,10 +8,14 @@
     "dev": "astro dev",
     "build": "astro check && astro build",
     "preview": "astro preview",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "db:test": "supabase test db",
     "check-links": "node scripts/check-base.mjs"
   },
   "dependencies": {
     "@astrojs/check": "0.9.12",
+    "@astrojs/cloudflare": "12.6.13",
     "@fontsource/rubik": "5.3.0",
     "astro": "5.18.2",
     "typescript": "5.9.3"
@@ -19,7 +23,16 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "esbuild",
-      "sharp"
+      "sharp",
+      "supabase",
+      "workerd"
     ]
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "@types/node": "22.20.5",
+    "supabase": "2.121.0",
+    "vitest": "3.2.7",
+    "wrangler": "4.151.2"
   }
 }

@@ -1,12 +1,14 @@
 // @ts-check
+import cloudflare from '@astrojs/cloudflare';
 import { defineConfig } from 'astro/config';
 
-// Static demo for GitHub Pages: https://schulichmed.github.io/uwomeds/
-// The real site (Astro on Cloudflare + Supabase) drops `base` and adds server routes.
+// The real site: Astro on Cloudflare Pages, served at the root (beta: https://uwomeds.pages.dev).
+// Pages stay static by default; a server route opts out with `export const prerender = false`.
+// (The council demo on `main` keeps `base: '/uwomeds'` for GitHub Pages.)
 export default defineConfig({
-  site: 'https://schulichmed.github.io',
-  base: '/uwomeds',
+  site: 'https://uwomeds.pages.dev',
   output: 'static',
+  adapter: cloudflare(),
   trailingSlash: 'always',
   build: { format: 'directory' },
 });

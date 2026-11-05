@@ -1,0 +1,6 @@
+# Cloudflare Pages project for the site. Deployed by .github/workflows/deploy.yml
+# (`wrangler pages deploy`), never from a laptop. Runtime secrets are set by that workflow.
+name = "uwomeds"
+pages_build_output_dir = "./dist"
+compatibility_date = "2026-10-01"
+compatibility_flags = ["nodejs_compat"]
