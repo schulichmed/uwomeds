@@ -173,7 +173,33 @@ export function getRoster(): RosterRow[] {
  * Apply an uploaded roster: every club named in `rows` gets exactly those execs (on its
  * page and in who may edit it); clubs not named keep their current execs.
  */
-export function applyRoster(rows: RosterRow[]): { clubs: number; execs: number } {
+export interface RosterSnapshot {
+  roster: string | null;
+  clubs: string | null;
+}
+
+function rawGet(key: string): string | null {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+/** Put the roster and club pages back exactly as they were before an apply. */
+export function undoRosterApply(snap: RosterSnapshot): void {
+  try {
+    for (const [key, raw] of [[KEY.roster, snap.roster], [KEY.clubs, snap.clubs]] as const) {
+      if (raw === null) window.localStorage.removeItem(key);
+      else window.localStorage.setItem(key, raw);
+    }
+  } catch {
+    /* storage blocked: nothing was saved, so nothing to undo */
+  }
+}
+
+export function applyRoster(rows: RosterRow[]): { clubs: number; execs: number; undo: RosterSnapshot } {
+  const undo: RosterSnapshot = { roster: rawGet(KEY.roster), clubs: rawGet(KEY.clubs) };
   const slugs = new Set(rows.map((r) => r.clubSlug));
   const roster = [...getRoster().filter((r) => !slugs.has(r.clubSlug)), ...rows];
   write(KEY.roster, roster);
@@ -190,7 +216,7 @@ export function applyRoster(rows: RosterRow[]): { clubs: number; execs: number }
       }));
     saveClub({ ...club, execs });
   });
-  return { clubs: slugs.size, execs: rows.length };
+  return { clubs: slugs.size, execs: rows.length, undo };
 }
 
 /* ---------- Club event reports ---------- */
