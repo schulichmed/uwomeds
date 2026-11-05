@@ -10,6 +10,7 @@ import type { Club } from './types';
 const CAMPUS_NAME = { london: 'London', windsor: 'Windsor' } as const;
 
 export function campusBadges(club: Club): string {
+  if (!club.campuses.length) return '<span class="badge badge-none">Campus not listed</span>';
   return club.campuses.map((c) => `<span class="badge badge-${c}">${CAMPUS_NAME[c]}</span>`).join(' ');
 }
 
