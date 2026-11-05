@@ -23,6 +23,8 @@ const KEY = {
   roster: `${PREFIX}roster`,
   eventReports: `${PREFIX}event-reports`,
   flash: `${PREFIX}flash`,
+  clubUndo: `${PREFIX}club-undo`,
+  bookingUndo: `${PREFIX}booking-undo`,
 };
 
 function read<T>(key: string, fallback: T): T {
@@ -155,8 +157,30 @@ export function isClubEdited(slug: string): boolean {
 
 export function saveClub(club: Club): boolean {
   const overrides = read<Record<string, Club>>(KEY.clubs, {});
+  write(KEY.clubUndo, { slug: club.slug, prev: overrides[club.slug] ?? null });
   overrides[club.slug] = club;
   return write(KEY.clubs, overrides);
+}
+
+/** The club whose last save can still be undone (offered once, with the "Saved" message). */
+export function takeClubUndo(): string | null {
+  const u = read<{ slug: string } | null>(KEY.clubUndo, null);
+  return u?.slug ?? null;
+}
+
+/** Put a club page back to how it was before its last save. */
+export function undoClubSave(): boolean {
+  const u = read<{ slug: string; prev: Club | null } | null>(KEY.clubUndo, null);
+  if (!u) return false;
+  const overrides = read<Record<string, Club>>(KEY.clubs, {});
+  if (u.prev) overrides[u.slug] = u.prev;
+  else delete overrides[u.slug];
+  remove(KEY.clubUndo);
+  return write(KEY.clubs, overrides);
+}
+
+export function forgetClubUndo(): void {
+  remove(KEY.clubUndo);
 }
 
 /* ---------- Exec roster ---------- */
@@ -248,12 +272,23 @@ export function decideBooking(id: string, decision: 'approved' | 'declined', not
   const b = bookings.find((x) => x.id === id);
   if (!b) return null;
   // Deciding again leaves one calendar entry: the calendar is derived from status.
+  write(KEY.bookingUndo, { ...b });
   b.status = decision;
   b.decisionNote = note;
   b.decidedBy = by;
   b.decidedAt = new Date().toISOString();
   write(KEY.bookings, bookings);
   return b;
+}
+
+/** Undo the most recent approve or decline: the booking goes back to how it was. */
+export function undoLastDecision(): Booking | null {
+  const prev = read<Booking | null>(KEY.bookingUndo, null);
+  if (!prev) return null;
+  const bookings = listBookings().map((x) => (x.id === prev.id ? prev : x));
+  write(KEY.bookings, bookings);
+  remove(KEY.bookingUndo);
+  return prev;
 }
 
 export function nextBookingId(): string {

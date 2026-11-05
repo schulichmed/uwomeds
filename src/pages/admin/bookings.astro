@@ -10,7 +10,7 @@ import Base from '../../layouts/Base.astro';
   import { esc } from '../../lib/escape';
   import { requireSignIn, showForbidden } from '../../lib/gate';
   import { href } from '../../lib/paths';
-  import { decideBooking, isBookingAdmin, listBookings } from '../../lib/store';
+  import { decideBooking, isBookingAdmin, listBookings, undoLastDecision } from '../../lib/store';
   import type { Booking, BookingStatus } from '../../lib/types';
 
   const root = document.getElementById('admin-root') as HTMLElement;
@@ -18,6 +18,8 @@ import Base from '../../layouts/Base.astro';
   type Filter = BookingStatus | 'all';
   let filter: Filter = 'pending';
   let lastMessage = '';
+  let lastTone: 'flash' | 'notice' = 'flash';
+  let confirmDecline = '';
 
   if (session && !isBookingAdmin(session)) {
     showForbidden(root, 'Only booking admins can see bookings.', `You're signed in as ${session.email}. Booking requests are private to the booking admins.`);
@@ -43,7 +45,11 @@ import Base from '../../layouts/Base.astro';
             b.status === 'approved' ? `<p class="auto-label">On the events calendar: added automatically when approved. <a href="${href('/calendar/')}">View calendar</a></p>` : ''
           }`
         : `<div class="field"><label for="note-${esc(b.id)}">Note to the requester (optional)</label><textarea id="note-${esc(b.id)}" rows="2" style="min-height:60px"></textarea></div>
-<p class="button-row"><button type="button" class="button ok" data-decide="approved" data-id="${esc(b.id)}">Approve</button><button type="button" class="button danger" data-decide="declined" data-id="${esc(b.id)}">Decline</button></p>`;
+${
+            confirmDecline === b.id
+              ? `<div class="warning-box" role="alert"><p><strong>Decline "${esc(b.eventTitle)}"?</strong> ${esc(b.requesterName)} is emailed that it was declined, with your note if you wrote one.</p><p class="button-row"><button type="button" class="button danger" data-decide="declined" data-confirmed="1" data-id="${esc(b.id)}">Yes, decline</button><button type="button" class="button secondary" data-cancel="1">Keep it pending</button></p></div>`
+              : `<p class="button-row"><button type="button" class="button ok" data-decide="approved" data-id="${esc(b.id)}">Approve</button><button type="button" class="button danger" data-decide="declined" data-id="${esc(b.id)}">Decline</button></p>`
+          }`;
     return `<li class="booking-card" id="booking-${esc(b.id)}">
   <p>${pill(b.status)} <span class="muted">${esc(REQUEST_LABEL[b.requestType])} · ${esc(CAMPUS_LABEL[b.campus])}</span></p>
   <h2>${esc(b.eventTitle)}</h2>
@@ -72,7 +78,7 @@ import Base from '../../layouts/Base.astro';
       `<button type="button" class="button secondary small" data-filter="${f}" aria-pressed="${filter === f}">${label}</button>`;
     root.innerHTML = `<h1>Bookings</h1>
 <p class="lead">Approve or decline room bookings. Approving adds the event to the events calendar automatically.</p>
-${lastMessage ? `<div class="flash" role="status" tabindex="-1">${lastMessage}</div>` : ''}
+${lastMessage ? `<div class="${lastTone}" role="status" tabindex="-1">${lastMessage}</div>` : ''}
 <div class="tabs" role="group" aria-label="Show bookings">
   ${tab('pending', `Pending (${counts.pending})`)}${tab('approved', `Approved (${counts.approved})`)}${tab('declined', `Declined (${counts.declined})`)}${tab('all', `All (${all.length})`)}
 </div>
@@ -88,10 +94,31 @@ ${shown.length ? `<ul class="booking-list">${shown.map(card).join('')}</ul>` : '
       render();
       return;
     }
+    if (target.closest('[data-cancel]')) {
+      confirmDecline = '';
+      render();
+      return;
+    }
+    if (target.closest('[data-undo]')) {
+      const prev = undoLastDecision();
+      confirmDecline = '';
+      lastTone = 'notice';
+      lastMessage = prev ? `Undone. "${esc(prev.eventTitle)}" is back to ${prev.status === 'pending' ? 'Pending' : prev.status === 'approved' ? 'Approved' : 'Declined'}.` : '';
+      render();
+      (root.querySelector('[role=status]') as HTMLElement | null)?.focus();
+      return;
+    }
     const decideBtn = target.closest<HTMLButtonElement>('[data-decide]');
     if (!decideBtn || !session) return;
     const id = decideBtn.dataset.id ?? '';
     const decision = decideBtn.dataset.decide as 'approved' | 'declined';
+    if (decision === 'declined' && !decideBtn.dataset.confirmed) {
+      confirmDecline = id;
+      render();
+      (root.querySelector(`#booking-${CSS.escape(id)} [data-confirmed]`) as HTMLElement | null)?.focus();
+      return;
+    }
+    confirmDecline = '';
     const note = (document.getElementById(`note-${id}`) as HTMLTextAreaElement | null)?.value.trim() ?? '';
     const b = decideBooking(id, decision, note, session.email);
     if (!b) return;
@@ -99,7 +126,9 @@ ${shown.length ? `<ul class="booking-list">${shown.map(card).join('')}</ul>` : '
       decision === 'approved'
         ? `Approved "${esc(b.eventTitle)}". It's on the <a href="${href('/calendar/')}">events calendar</a> now, and ${esc(b.requesterEmail)} was emailed.`
         : `Declined "${esc(b.eventTitle)}". ${esc(b.requesterEmail)} was emailed${note ? ' with your note' : ''}.`;
+    lastMessage += ' <button type="button" class="button small secondary" data-undo="1">Undo</button>';
+    lastTone = decision === 'approved' ? 'flash' : 'notice';
     render();
-    (root.querySelector('.flash') as HTMLElement | null)?.focus();
+    (root.querySelector('[role=status]') as HTMLElement | null)?.focus();
   });
 </script>

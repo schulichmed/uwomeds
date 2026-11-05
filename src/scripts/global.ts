@@ -1,7 +1,7 @@
 /** Runs on every page: demo banner, header sign-in state, menu, flash messages. */
 import { esc } from '../lib/escape';
 import { href } from '../lib/paths';
-import { canEditClub, getClub, getSession, isAnyAdmin, resetDemo, signIn, signOut, takeFlash } from '../lib/store';
+import { canEditClub, forgetClubUndo, getClub, getSession, isAnyAdmin, resetDemo, setFlash, signIn, signOut, takeClubUndo, takeFlash, undoClubSave } from '../lib/store';
 
 document.documentElement.classList.add('js');
 
@@ -79,4 +79,19 @@ const flashEl = document.getElementById('flash');
 if (flash && flashEl) {
   flashEl.textContent = flash;
   flashEl.hidden = false;
-}
+  // After a club save, offer to put the page back. Offered once: leaving the page drops it.
+  const undoSlug = takeClubUndo();
+  if (undoSlug && window.location.pathname.includes(`/clubs/${undoSlug}/`)) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'button small secondary';
+    btn.textContent = 'Undo';
+    btn.style.marginLeft = '8px';
+    btn.addEventListener('click', () => {
+      undoClubSave();
+      setFlash('Undone. Your club page is back to how it was.');
+      window.location.reload();
+    });
+    flashEl.append(' ', btn);
+  } else forgetClubUndo();
+} else forgetClubUndo();
