@@ -27,7 +27,8 @@ import { href } from '../../lib/paths';
   import { esc } from '../../lib/escape';
   import { requireSignIn, showForbidden } from '../../lib/gate';
   import { parseRoster, type ParsedRoster } from '../../lib/roster-csv';
-  import { applyRoster, canManageRoster, getRoster, listClubs } from '../../lib/store';
+  import { PERSONAS } from '../../data/people';
+  import { applyRoster, canManageRoster, getRoster, listClubs, undoRosterApply } from '../../lib/store';
 
   const root = document.getElementById('roster-root') as HTMLElement;
   const session = requireSignIn();
@@ -59,6 +60,7 @@ import { href } from '../../lib/paths';
       const slugs = [...new Set(parsed.rows.map((r) => r.clubSlug))];
       const removed = current.filter((r) => slugs.includes(r.clubSlug) && !parsed?.rows.some((n) => n.clubSlug === r.clubSlug && n.email === r.email));
       const added = parsed.rows.filter((n) => !current.some((r) => r.clubSlug === n.clubSlug && r.email === n.email));
+      const lockouts = removed.filter((r) => !getRoster().some((o) => o.email === r.email && !slugs.includes(o.clubSlug)));
       preview.innerHTML = `<h2>Preview</h2>
 <p>${parsed.rows.length} execs for ${slugs.length} club${slugs.length === 1 ? '' : 's'}. Nothing changes until you choose Apply.</p>
 <ul class="booking-list">${slugs
@@ -72,11 +74,16 @@ import { href } from '../../lib/paths';
             .join('')}</ul></li>`,
         )
         .join('')}</ul>
+${lockouts.length ? `<div class="warning-box" role="alert"><h2>Some people will lose edit access</h2><ul>${lockouts.map((r) => `<li>${esc(r.name)} (${esc(r.email)}) will no longer be able to edit ${esc(nameOf(r.clubSlug))} or send its event reports. ${r.email === session.email ? 'This is you. ' : ''}${PERSONAS.some((p) => p.email === r.email) ? 'This is one of the demo sign-in personas. ' : ''}Add them to the file if they should keep access.</li>`).join('')}</ul></div>` : ''}
 <p><button type="button" class="button" id="apply-roster">Apply roster</button></p>`;
       document.getElementById('apply-roster')?.addEventListener('click', () => {
         if (!parsed) return;
         const result = applyRoster(parsed.rows);
-        preview.innerHTML = `<div class="flash" role="status">Roster applied: ${result.execs} execs on ${result.clubs} club${result.clubs === 1 ? '' : 's'}.</div>`;
+        preview.innerHTML = `<div class="flash" role="status">Roster applied: ${result.execs} execs on ${result.clubs} club${result.clubs === 1 ? '' : 's'}. <button type="button" class="button small secondary" id="undo-roster">Undo</button></div>`;
+        document.getElementById('undo-roster')?.addEventListener('click', () => {
+          undoRosterApply(result.undo);
+          preview.innerHTML = '<div class="notice" role="status">Undone. The roster and club pages are back to how they were.</div>';
+        });
         parsed = null;
         text.value = '';
       });
