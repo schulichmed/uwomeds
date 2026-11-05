@@ -1,7 +1,7 @@
 /** Runs on every page: demo banner, header sign-in state, menu, flash messages. */
 import { esc } from '../lib/escape';
 import { href } from '../lib/paths';
-import { getClub, getSession, isBookingAdmin, resetDemo, signIn, signOut, takeFlash } from '../lib/store';
+import { canEditClub, getClub, getSession, isAnyAdmin, resetDemo, signIn, signOut, takeFlash } from '../lib/store';
 
 document.documentElement.classList.add('js');
 
@@ -32,11 +32,11 @@ document.getElementById('reset-demo')?.addEventListener('click', () => {
 const auth = document.getElementById('auth-area');
 if (auth && session) {
   const parts: string[] = [`<span class="signed-in-as">Signed in as <strong>${esc(session.name)}</strong></span>`];
-  if (session.role === 'club_exec' && session.clubSlug) {
+  if (session.clubSlug && canEditClub(session, session.clubSlug)) {
     const club = getClub(session.clubSlug);
     parts.push(`<a href="${href(`/clubs/${session.clubSlug}/`)}">My club${club ? `: ${esc(club.name)}` : ''}</a>`);
   }
-  if (isBookingAdmin(session)) parts.push(`<a href="${href('/admin/')}">Admin</a>`);
+  if (isAnyAdmin(session)) parts.push(`<a href="${href('/admin/')}">Admin</a>`);
   parts.push('<button type="button" class="button small" id="sign-out">Sign out</button>');
   auth.innerHTML = parts.join('');
   document.getElementById('sign-out')?.addEventListener('click', () => {

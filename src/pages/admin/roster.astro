@@ -1,0 +1,85 @@
+---
+import Base from '../../layouts/Base.astro';
+import { href } from '../../lib/paths';
+---
+<Base title="Admin: exec roster">
+  <div id="roster-root"><p class="muted">Checking who you're signed in as...</p></div>
+  <template id="roster-form-tpl">
+    <h1>Clubs and exec roster</h1>
+    <p class="lead">Upload this year's exec roster. It sets each listed club's exec team and decides who can edit that club's page.</p>
+    <p>One row per exec, with the columns <code>club, name, email, role</code>. Clubs not in the file keep their current execs. <a href={href('/sample-exec-roster.csv')} download>Download a sample CSV</a> (sample people only).</p>
+    <form id="roster-form" class="stack" novalidate>
+      <div class="field">
+        <label for="roster-file">Choose a CSV file</label>
+        <input type="file" id="roster-file" accept=".csv,text/csv" />
+      </div>
+      <div class="field">
+        <label for="roster-text">Or paste the CSV</label>
+        <textarea id="roster-text" spellcheck="false"></textarea>
+      </div>
+      <button class="button secondary" type="submit">Preview</button>
+    </form>
+    <div id="roster-preview" aria-live="polite"></div>
+  </template>
+</Base>
+
+<script>
+  import { esc } from '../../lib/escape';
+  import { requireSignIn, showForbidden } from '../../lib/gate';
+  import { parseRoster, type ParsedRoster } from '../../lib/roster-csv';
+  import { applyRoster, canManageRoster, getRoster, listClubs } from '../../lib/store';
+
+  const root = document.getElementById('roster-root') as HTMLElement;
+  const session = requireSignIn();
+  let parsed: ParsedRoster | null = null;
+
+  if (session && !canManageRoster(session)) {
+    showForbidden(root, 'Only the Community Relations Director can upload the exec roster.', `You're signed in as ${session.email}.`);
+  } else if (session) {
+    const tpl = document.getElementById('roster-form-tpl') as HTMLTemplateElement;
+    root.replaceChildren(tpl.content.cloneNode(true));
+    const text = document.getElementById('roster-text') as HTMLTextAreaElement;
+    const preview = document.getElementById('roster-preview') as HTMLElement;
+
+    document.getElementById('roster-file')?.addEventListener('change', async (ev) => {
+      const file = (ev.target as HTMLInputElement).files?.[0];
+      if (file) text.value = await file.text();
+    });
+
+    document.getElementById('roster-form')?.addEventListener('submit', (ev) => {
+      ev.preventDefault();
+      parsed = parseRoster(text.value, listClubs());
+      const clubs = listClubs();
+      const nameOf = (slug: string) => clubs.find((c) => c.slug === slug)?.name ?? slug;
+      if (parsed.errors.length) {
+        preview.innerHTML = `<div class="error-summary" role="alert"><h2>Fix these lines, then preview again</h2><ul>${parsed.errors.map((e) => `<li>${esc(e)}</li>`).join('')}</ul></div>`;
+        return;
+      }
+      const current = getRoster();
+      const slugs = [...new Set(parsed.rows.map((r) => r.clubSlug))];
+      const removed = current.filter((r) => slugs.includes(r.clubSlug) && !parsed?.rows.some((n) => n.clubSlug === r.clubSlug && n.email === r.email));
+      const added = parsed.rows.filter((n) => !current.some((r) => r.clubSlug === n.clubSlug && r.email === n.email));
+      preview.innerHTML = `<h2>Preview</h2>
+<p>${parsed.rows.length} execs for ${slugs.length} club${slugs.length === 1 ? '' : 's'}. Nothing changes until you choose Apply.</p>
+<ul class="booking-list">${slugs
+        .map(
+          (slug) => `<li class="booking-card"><h3>${esc(nameOf(slug))}</h3><ul>${parsed?.rows
+            .filter((r) => r.clubSlug === slug)
+            .map((r) => `<li>${esc(r.name)}, ${esc(r.role)} (${esc(r.email)})${added.includes(r) ? ' <span class="pill pill-approved">New: can edit</span>' : ''}</li>`)
+            .join('')}${removed
+            .filter((r) => r.clubSlug === slug)
+            .map((r) => `<li><s>${esc(r.name)} (${esc(r.email)})</s> <span class="pill pill-declined">Removed: loses edit access</span></li>`)
+            .join('')}</ul></li>`,
+        )
+        .join('')}</ul>
+<p><button type="button" class="button" id="apply-roster">Apply roster</button></p>`;
+      document.getElementById('apply-roster')?.addEventListener('click', () => {
+        if (!parsed) return;
+        const result = applyRoster(parsed.rows);
+        preview.innerHTML = `<div class="flash" role="status">Roster applied: ${result.execs} execs on ${result.clubs} club${result.clubs === 1 ? '' : 's'}.</div>`;
+        parsed = null;
+        text.value = '';
+      });
+    });
+  }
+</script>

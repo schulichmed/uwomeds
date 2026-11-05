@@ -10,7 +10,7 @@ export function href(path: string): string {
   return `${BASE}${pathname}${suffix}`;
 }
 
-/** The current page path with the base removed, e.g. "/clubs/sample-surgery-interest-group/". */
+/** The current page path with the base removed, e.g. "/clubs/surgery-interest-group/". */
 export function currentPath(): string {
   const p = window.location.pathname;
   return p.startsWith(BASE) ? p.slice(BASE.length) || '/' : p;

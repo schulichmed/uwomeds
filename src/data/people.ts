@@ -5,13 +5,19 @@ export const PERSONAS: Persona[] = [
   { id: 'student', label: 'Student', name: 'Alex Sample', email: 'student1@meds.uwo.ca' },
   {
     id: 'club_exec',
-    label: 'Club exec (Sample Surgery Interest Group)',
+    label: 'Club exec (Surgery Interest Group)',
     name: 'Jordan Sample',
     email: 'exec1@meds.uwo.ca',
-    clubSlug: 'sample-surgery-interest-group',
+    clubSlug: 'surgery-interest-group',
   },
   { id: 'booking_admin', label: 'Booking admin', name: 'Sam Sample', email: 'bookingadmin@uwo.ca' },
   { id: 'page_editor', label: 'Page editor', name: 'Taylor Sample', email: 'editor@meds.uwo.ca' },
+  {
+    id: 'community_relations',
+    label: 'Community Relations Director',
+    name: 'Marlow Sample',
+    email: 'communityrelations.sample@meds.uwo.ca',
+  },
   { id: 'site_admin', label: 'IT Director (site admin)', name: 'IT Director', email: 'hippoit@uwo.ca' },
 ];
 

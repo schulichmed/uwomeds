@@ -1,23 +1,42 @@
 ---
 import Base from '../layouts/Base.astro';
 import { href } from '../lib/paths';
+
+const MEDFRIEND_URL = 'https://schulichmed.github.io/preclerkship/';
 ---
 <Base title="MedFriend">
-  <h1>MedFriend</h1>
-  <p class="lead">Preclerkship lecture notes, a question bank and Anki decks, made by Schulich students for Western students.</p>
-  <ul>
-    <li>Open to anyone with a Western email (@meds.uwo.ca or @uwo.ca).</li>
-    <li>Your progress is saved to your account, so it follows you between devices.</li>
-    <li>Student-made: not official Schulich curriculum or medical advice.</li>
-  </ul>
-  <p><a class="button" id="medfriend-signin" href={href('/login/?next=/medfriend/')}>Sign in with your Western email</a></p>
-  <p class="demo-note" id="medfriend-signed-in" hidden>Demo: you're signed in. On the real site, MedFriend's notes, questions and decks open here. No course content is included in this demo.</p>
+  <section slot="full-bleed" class="medfriend">
+    <div class="wrap">
+      <h1>MedFriend</h1>
+      <div id="medfriend-intro">
+        <p class="lead">Preclerkship lecture notes, a question bank and Anki decks, made by Schulich students for Western students.</p>
+        <ul>
+          <li>Open to anyone with a Western email (@meds.uwo.ca or @uwo.ca).</li>
+          <li>Your progress is saved to your account, so it follows you between devices.</li>
+          <li>Student-made: not official Schulich curriculum or medical advice.</li>
+        </ul>
+        <p><a class="button" id="medfriend-signin" href={href('/login/?next=/medfriend/')}>Sign in with your Western email</a></p>
+      </div>
+    </div>
+    <div id="medfriend-app" class="medfriend-app" hidden data-src={MEDFRIEND_URL}>
+      <p class="medfriend-bar"><a href={MEDFRIEND_URL} target="_blank" rel="noopener">Open in a new tab</a></p>
+    </div>
+  </section>
 </Base>
 
 <script>
   import { getSession } from '../lib/store';
   if (getSession()) {
-    (document.getElementById('medfriend-signin') as HTMLElement).hidden = true;
-    (document.getElementById('medfriend-signed-in') as HTMLElement).hidden = false;
+    const app = document.getElementById('medfriend-app') as HTMLElement;
+    // The iframe is only created once signed in, so signed-out visitors load nothing from MedFriend.
+    const frame = document.createElement('iframe');
+    frame.src = app.dataset.src ?? '';
+    frame.title = 'MedFriend';
+    frame.className = 'medfriend-frame';
+    frame.allow = 'fullscreen';
+    frame.allowFullscreen = true;
+    app.append(frame);
+    (document.getElementById('medfriend-intro') as HTMLElement).hidden = true;
+    app.hidden = false;
   }
 </script>

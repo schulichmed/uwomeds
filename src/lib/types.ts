@@ -1,6 +1,6 @@
 export type Campus = 'london' | 'windsor';
 export type BookingCampus = Campus | 'both';
-export type Role = 'student' | 'club_exec' | 'booking_admin' | 'page_editor' | 'site_admin';
+export type Role = 'student' | 'club_exec' | 'booking_admin' | 'page_editor' | 'community_relations' | 'site_admin';
 
 export interface ClubExec {
   name: string;
@@ -68,6 +68,25 @@ export interface CalendarEvent {
   endsAt: string;
   location: string;
   campus: BookingCampus;
+}
+
+/** One row of the exec roster the Community Relations Director uploads. */
+export interface RosterRow {
+  clubSlug: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
+export interface EventReport {
+  number: number;
+  clubSlug: string;
+  eventTitle: string;
+  date: string; // YYYY-MM-DD
+  attendance: number;
+  notes: string;
+  submittedBy: string;
+  submittedAt: string; // ISO
 }
 
 export interface PageVersion {

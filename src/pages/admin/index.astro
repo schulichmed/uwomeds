@@ -8,21 +8,28 @@ import Base from '../../layouts/Base.astro';
 <script>
   import { requireSignIn, showForbidden } from '../../lib/gate';
   import { href } from '../../lib/paths';
-  import { isBookingAdmin, isPageEditor, listBookings } from '../../lib/store';
+  import { canManageRoster, isAnyAdmin, isBookingAdmin, isPageEditor, listBookings, listEventReports } from '../../lib/store';
 
   const root = document.getElementById('admin-root') as HTMLElement;
   const session = requireSignIn();
-  if (session && !isBookingAdmin(session)) {
-    showForbidden(root, 'This area is for booking admins and the IT Director.', `You're signed in as ${session.email}.`);
+  if (session && !isAnyAdmin(session)) {
+    showForbidden(root, 'This area is for booking admins, the Community Relations Director and the IT Director.', `You're signed in as ${session.email}.`);
   } else if (session) {
     const pending = listBookings().filter((b) => b.status === 'pending').length;
-    const items = [
-      `<li class="tile"><h2><a href="${href('/admin/bookings/')}">Bookings</a></h2><p>${pending} waiting for a decision.</p></li>`,
-    ];
+    const items: string[] = [];
+    if (isBookingAdmin(session)) {
+      items.push(`<li class="tile"><h2><a href="${href('/admin/bookings/')}">Bookings</a></h2><p>${pending} waiting for a decision.</p></li>`);
+    }
+    if (canManageRoster(session)) {
+      const reports = listEventReports().length;
+      items.push(
+        `<li class="tile"><h2><a href="${href('/admin/roster/')}">Clubs and exec roster</a></h2><p>Upload this year's exec roster. It decides who can edit each club's page.</p></li>`,
+        `<li class="tile"><h2>Club event reports</h2><p>${reports} received in this browser. On the real site you can export them as a spreadsheet.</p></li>`,
+      );
+    }
     if (session.role === 'site_admin') {
       items.push(
         `<li class="tile"><h2>People and roles</h2><p class="muted">Assign booking admins and page editors, manage approved outside emails. Not in this demo.</p></li>`,
-        `<li class="tile"><h2>Clubs and exec roster</h2><p class="muted">Upload the exec roster each year. Not in this demo.</p></li>`,
       );
     }
     if (isPageEditor(session)) {

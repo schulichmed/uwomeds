@@ -6,12 +6,13 @@
  * In the real build each function here becomes a Supabase query or an /api route.
  */
 import { SAMPLE_BOOKINGS, SAMPLE_EVENTS } from '../data/bookings';
-import { SAMPLE_CLUBS, SAMPLE_ROSTER } from '../data/clubs';
+import { CLUBS } from '../data/clubs';
 import { COUNCIL_PAGES } from '../data/pages';
 import { PERSONAS } from '../data/people';
-import type { Booking, CalendarEvent, Club, PageVersion, Role, Session } from './types';
+import type { Booking, CalendarEvent, Club, ClubExec, EventReport, PageVersion, Role, RosterRow, Session } from './types';
 
-const PREFIX = 'uwomeds-demo:v1:';
+// v2: real club slugs replaced the sample ones, so v1 data is ignored.
+const PREFIX = 'uwomeds-demo:v2:';
 const KEY = {
   session: `${PREFIX}session`,
   pendingSignIn: `${PREFIX}pending-sign-in`,
@@ -19,6 +20,8 @@ const KEY = {
   bookings: `${PREFIX}bookings`,
   pages: `${PREFIX}pages`,
   reportCounter: `${PREFIX}report-counter`,
+  roster: `${PREFIX}roster`,
+  eventReports: `${PREFIX}event-reports`,
   flash: `${PREFIX}flash`,
 };
 
@@ -70,9 +73,8 @@ export function getSession(): Session | null {
 export function roleForEmail(email: string): { role: Role; name: string; clubSlug?: string } {
   const persona = PERSONAS.find((p) => p.email === email);
   if (persona) return { role: persona.id, name: persona.name, clubSlug: persona.clubSlug };
-  const rosterRow = SAMPLE_ROSTER.find((r) => r.email === email);
-  const exec = rosterRow ? getClub(rosterRow.clubSlug)?.execs.find((e) => e.email === email) : undefined;
-  if (rosterRow) return { role: 'club_exec', name: exec?.name ?? email, clubSlug: rosterRow.clubSlug };
+  const rosterRow = getRoster().find((r) => r.email === email);
+  if (rosterRow) return { role: 'club_exec', name: rosterRow.name || email, clubSlug: rosterRow.clubSlug };
   return { role: 'student', name: email.split('@')[0] };
 }
 
@@ -109,9 +111,19 @@ export function isPageEditor(s: Session | null): boolean {
   return !!s && (s.role === 'page_editor' || s.role === 'site_admin');
 }
 
+/** The Community Relations Director (and the IT Director) upload the exec roster. */
+export function canManageRoster(s: Session | null): boolean {
+  return !!s && (s.role === 'community_relations' || s.role === 'site_admin');
+}
+
+/** Anyone with an admin tile: booking admins, the roster manager, the IT Director. */
+export function isAnyAdmin(s: Session | null): boolean {
+  return isBookingAdmin(s) || canManageRoster(s);
+}
+
 /** Only a club exec on that club's roster may edit it (plan Task 4's is_club_editor). */
 export function canEditClub(s: Session | null, slug: string): boolean {
-  return !!s && SAMPLE_ROSTER.some((r) => r.clubSlug === slug && r.email === s.email);
+  return !!s && getRoster().some((r) => r.clubSlug === slug && r.email === s.email);
 }
 
 /* ---------- Flash message (one-shot notice shown after a redirect) ---------- */
@@ -130,7 +142,7 @@ export function takeFlash(): string | null {
 
 export function listClubs(): Club[] {
   const overrides = read<Record<string, Club>>(KEY.clubs, {});
-  return SAMPLE_CLUBS.map((c) => overrides[c.slug] ?? c);
+  return CLUBS.map((c) => overrides[c.slug] ?? c);
 }
 
 export function getClub(slug: string): Club | undefined {
@@ -145,6 +157,54 @@ export function saveClub(club: Club): boolean {
   const overrides = read<Record<string, Club>>(KEY.clubs, {});
   overrides[club.slug] = club;
   return write(KEY.clubs, overrides);
+}
+
+/* ---------- Exec roster ---------- */
+
+function seedRoster(): RosterRow[] {
+  return CLUBS.flatMap((club) => club.execs.map((e) => ({ clubSlug: club.slug, name: e.name, email: e.email, role: e.role })));
+}
+
+export function getRoster(): RosterRow[] {
+  return read<RosterRow[]>(KEY.roster, seedRoster());
+}
+
+/**
+ * Apply an uploaded roster: every club named in `rows` gets exactly those execs (on its
+ * page and in who may edit it); clubs not named keep their current execs.
+ */
+export function applyRoster(rows: RosterRow[]): { clubs: number; execs: number } {
+  const slugs = new Set(rows.map((r) => r.clubSlug));
+  const roster = [...getRoster().filter((r) => !slugs.has(r.clubSlug)), ...rows];
+  write(KEY.roster, roster);
+  slugs.forEach((slug) => {
+    const club = getClub(slug);
+    if (!club) return;
+    const execs: ClubExec[] = rows
+      .filter((r) => r.clubSlug === slug)
+      .map((r) => ({
+        name: r.name,
+        role: r.role,
+        email: r.email,
+        showEmail: club.execs.find((e) => e.email === r.email)?.showEmail ?? false,
+      }));
+    saveClub({ ...club, execs });
+  });
+  return { clubs: slugs.size, execs: rows.length };
+}
+
+/* ---------- Club event reports ---------- */
+
+export function listEventReports(clubSlug?: string): EventReport[] {
+  const all = read<EventReport[]>(KEY.eventReports, []);
+  return clubSlug ? all.filter((r) => r.clubSlug === clubSlug) : all;
+}
+
+export function addEventReport(report: Omit<EventReport, 'number' | 'submittedAt'>): EventReport {
+  const all = listEventReports();
+  const saved: EventReport = { ...report, number: (all.at(-1)?.number ?? 100) + 1, submittedAt: new Date().toISOString() };
+  write(KEY.eventReports, [...all, saved]);
+  return saved;
 }
 
 /* ---------- Bookings ---------- */

@@ -1,8 +1,12 @@
 ---
+import { QUICK_LINKS } from '../data/links';
 import { href } from '../lib/paths';
 
 interface MenuItem { label: string; url: string }
 interface MenuGroup { label: string; url?: string; items?: MenuItem[] }
+
+/** Site paths go under the base; outbound links (the Links menu) stay as they are. */
+const link = (url: string) => (/^https?:/.test(url) ? url : href(url));
 
 // Matches the current site's primary menu (spec; plan Task 15). The menu is code, not content.
 // MedFriend sits under Resources so the top row matches the live site's five items.
@@ -23,6 +27,7 @@ const menu: MenuGroup[] = [
       { label: 'Extracurricular', url: '/extracurricular/' },
       { label: 'Educational', url: '/educational/' },
       { label: 'Wellness', url: '/wellness/' },
+      { label: 'Research From Home', url: '/research-from-home/' },
       { label: 'MedFriend', url: '/medfriend/' },
     ],
   },
@@ -37,13 +42,7 @@ const menu: MenuGroup[] = [
   },
   {
     label: 'Links',
-    items: [
-      { label: 'Elentra', url: '/links/#elentra' },
-      { label: 'OWL', url: '/links/#owl' },
-      { label: 'Western Email', url: '/links/#western-email' },
-      { label: 'Schulich Hub', url: '/links/#schulich-hub' },
-      { label: 'Western Libraries', url: '/links/#western-libraries' },
-    ],
+    items: QUICK_LINKS.map((l) => ({ label: `${l.label} \u2197`, url: l.url })),
   },
   { label: 'Contact', url: '/contact/' },
 ];
@@ -62,7 +61,7 @@ const menu: MenuGroup[] = [
               <details>
                 <summary>{group.label}</summary>
                 <ul class="submenu">
-                  {group.items.map((item) => <li><a href={href(item.url)}>{item.label}</a></li>)}
+                  {group.items.map((item) => <li><a href={link(item.url)}>{item.label}</a></li>)}
                 </ul>
               </details>
             </li>

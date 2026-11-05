@@ -1,9 +1,97 @@
 ---
 import Base from '../layouts/Base.astro';
-import { href } from '../lib/paths';
 ---
 <Base title="Club event report">
-  <h1>Club event report</h1>
-  <p class="lead">After your event, tell the council how it went: attendance, and whether Hippo funded it.</p>
-  <p class="demo-note">Demo: this form isn't built in the demo. On the real site it's a signed-in form, and the Community Relations Director can export the reports as a spreadsheet. To try a working form, see <a href={href('/room-booking/')}>Event &amp; room booking</a>.</p>
+  <div id="report-root"><p class="muted">Checking who you're signed in as...</p></div>
+  <template id="report-form-tpl">
+    <h1>Club event report</h1>
+    <p class="lead">After your event, tell the council how it went. Your club's execs can see every report under My club.</p>
+    <form id="event-report-form" class="stack" novalidate>
+      <div id="form-errors"></div>
+      <div class="field">
+        <label for="club">Club</label>
+        <select id="club"></select>
+      </div>
+      <div class="field" id="f-eventTitle">
+        <label for="eventTitle">Event name</label>
+        <input type="text" id="eventTitle" aria-describedby="eventTitle-error" />
+        <p class="error" id="eventTitle-error" hidden>Enter the event name.</p>
+      </div>
+      <div class="field" id="f-date">
+        <label for="date">Date of the event</label>
+        <input type="date" id="date" aria-describedby="date-error" />
+        <p class="error" id="date-error" hidden>Enter the date of the event.</p>
+      </div>
+      <div class="field" id="f-attendance">
+        <label for="attendance">How many people came?</label>
+        <input type="number" id="attendance" min="0" step="1" inputmode="numeric" aria-describedby="attendance-error" />
+        <p class="error" id="attendance-error" hidden>Enter the number of attendees (0 or more).</p>
+      </div>
+      <div class="field">
+        <label for="notes">Notes (optional)</label>
+        <span class="hint" id="notes-hint">How it went, what you'd change, whether Hippo funded it.</span>
+        <textarea id="notes" aria-describedby="notes-hint"></textarea>
+      </div>
+      <button class="button" type="submit">Send report</button>
+    </form>
+  </template>
 </Base>
+
+<script>
+  import { esc } from '../lib/escape';
+  import { requireSignIn, showForbidden } from '../lib/gate';
+  import { href } from '../lib/paths';
+  import { addEventReport, getRoster, listClubs } from '../lib/store';
+
+  const root = document.getElementById('report-root') as HTMLElement;
+  const session = requireSignIn();
+  const mySlugs = session ? getRoster().filter((r) => r.email === session.email).map((r) => r.clubSlug) : [];
+  const myClubs = listClubs().filter((c) => mySlugs.includes(c.slug));
+
+  if (session && !myClubs.length) {
+    showForbidden(root, "Only club execs on this year's roster can send event reports.", `You're signed in as ${session.email}, who isn't on any club's exec roster.`);
+  } else if (session) {
+    const tpl = document.getElementById('report-form-tpl') as HTMLTemplateElement;
+    root.replaceChildren(tpl.content.cloneNode(true));
+    const select = document.getElementById('club') as HTMLSelectElement;
+    select.innerHTML = myClubs.map((c) => `<option value="${esc(c.slug)}">${esc(c.name)}</option>`).join('');
+    const form = document.getElementById('event-report-form') as HTMLFormElement;
+
+    form.addEventListener('submit', (ev) => {
+      ev.preventDefault();
+      const value = (id: string) => (document.getElementById(id) as HTMLInputElement).value.trim();
+      const attendance = Number(value('attendance'));
+      const checks: [string, boolean][] = [
+        ['eventTitle', !!value('eventTitle')],
+        ['date', /^\d{4}-\d{2}-\d{2}$/.test(value('date'))],
+        ['attendance', value('attendance') !== '' && Number.isInteger(attendance) && attendance >= 0],
+      ];
+      const bad = checks.filter(([, ok]) => !ok).map(([id]) => id);
+      checks.forEach(([id, ok]) => {
+        (document.getElementById(`${id}-error`) as HTMLElement).hidden = ok;
+        document.getElementById(`f-${id}`)?.classList.toggle('has-error', !ok);
+        const input = document.getElementById(id) as HTMLElement;
+        if (ok) input.removeAttribute('aria-invalid');
+        else input.setAttribute('aria-invalid', 'true');
+      });
+      if (bad.length) {
+        (document.getElementById(bad[0]) as HTMLElement).focus();
+        return;
+      }
+      const report = addEventReport({
+        clubSlug: select.value,
+        eventTitle: value('eventTitle'),
+        date: value('date'),
+        attendance,
+        notes: value('notes'),
+        submittedBy: session.email,
+      });
+      const club = myClubs.find((c) => c.slug === report.clubSlug);
+      root.innerHTML = `<h1 tabindex="-1">Thanks, report #${report.number} received</h1>
+<div class="ok-box" role="status"><p>${esc(report.eventTitle)} for ${esc(club?.name ?? '')} is saved. Your club's execs can see it on <a href="${href(`/clubs/${report.clubSlug}/`)}">your club's page</a>.</p></div>
+<p class="demo-note">Demo: saved in this browser only. On the real site the Community Relations Director can export the reports as a spreadsheet.</p>
+<p><a class="button secondary" href="${href('/club-event-report/')}">Send another report</a></p>`;
+      (root.querySelector('h1') as HTMLElement).focus();
+    });
+  }
+</script>

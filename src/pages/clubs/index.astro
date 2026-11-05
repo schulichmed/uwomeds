@@ -1,6 +1,6 @@
 ---
 import Base from '../../layouts/Base.astro';
-import { SAMPLE_CLUBS } from '../../data/clubs';
+import { CLUBS } from '../../data/clubs';
 import { clubCardHtml } from '../../lib/render-club';
 ---
 <Base title="Club directory">
@@ -20,9 +20,9 @@ import { clubCardHtml } from '../../lib/render-club';
       </div>
     </fieldset>
   </form>
-  <p id="club-count" class="muted" aria-live="polite">{SAMPLE_CLUBS.length} clubs</p>
+  <p id="club-count" class="muted" aria-live="polite">{CLUBS.length} clubs</p>
   <ul id="club-list" class="club-list">
-    <Fragment set:html={SAMPLE_CLUBS.map(clubCardHtml).join('')} />
+    <Fragment set:html={CLUBS.map(clubCardHtml).join('')} />
   </ul>
 </Base>
 

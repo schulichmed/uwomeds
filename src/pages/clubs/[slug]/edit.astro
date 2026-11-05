@@ -1,13 +1,13 @@
 ---
 import Base from '../../../layouts/Base.astro';
 import PrivacyNotice from '../../../components/PrivacyNotice.astro';
-import { SAMPLE_CLUBS } from '../../../data/clubs';
+import { CLUBS } from '../../../data/clubs';
 import { IT_CONTACT } from '../../../data/people';
 import { href } from '../../../lib/paths';
 import type { Club } from '../../../lib/types';
 
 export function getStaticPaths() {
-  return SAMPLE_CLUBS.map((club) => ({ params: { slug: club.slug }, props: { club } }));
+  return CLUBS.map((club) => ({ params: { slug: club.slug }, props: { club } }));
 }
 const { club } = Astro.props as { club: Club };
 ---
