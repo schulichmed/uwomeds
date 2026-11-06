@@ -14,7 +14,7 @@ importers:
       '@astrojs/cloudflare':
         specifier: 12.6.13
         version: 12.6.13(@types/node@22.20.5)(astro@5.18.2(@types/node@22.20.5)(rollup@4.67.5)(typescript@5.9.3)(yaml@2.9.1))(yaml@2.9.1)
-      '@fontsource/rubik':
+      '@fontsource-variable/archivo':
         specifier: 5.3.0
         version: 5.3.0
       '@supabase/ssr':
@@ -872,8 +872,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@fontsource/rubik@5.3.0':
-    resolution: {integrity: sha512-Nks2mn7vlE1jZVHuVgoKU2Ejqjvd+GJzLRdraCjo1xc79oo7O6vJ8pcvSfmKPGX3/Ln7nt09XWFzPeu2jWf0xQ==}
+  '@fontsource-variable/archivo@5.3.0':
+    resolution: {integrity: sha512-HogK8FJelrD1o7TlZlkIVtHgc20bO5PZRWE7mUeUTdMN055alznQV6/00J00IBeu8FQAH4s3zW9UJNvKExXf+g==}
 
   '@img/colour@1.1.0':
     resolution: {integrity: sha512-Td76q7j57o/tLVdgS746cYARfSyxk8iEfRxewL9h4OMzYhbW4TAcppl0mT4eyqXddh6L/jwoM75mo7ixa/pCeQ==}
@@ -3555,7 +3555,7 @@ snapshots:
   '@esbuild/win32-x64@0.28.2':
     optional: true
 
-  '@fontsource/rubik@5.3.0': {}
+  '@fontsource-variable/archivo@5.3.0': {}
 
   '@img/colour@1.1.0': {}
 

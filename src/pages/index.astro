@@ -4,44 +4,44 @@ import EventsCalendar from '../components/EventsCalendar.astro';
 import { href } from '../lib/paths';
 ---
 <Base title="Home">
-  <section class="hero" slot="full-bleed" aria-labelledby="hero-h">
-    <div class="wrap hero-inner">
+  <section class="cover" slot="full-bleed" aria-labelledby="hero-h">
+    <div class="wrap cover-inner">
       <h1 id="hero-h">Schulich Meds</h1>
-      <img class="hero-art" src={href('/hero-people.png')} alt="" width="775" height="767" />
+      <p class="cover-lead">Your council, your clubs and room booking in one place. Run by students, behind your Western email.</p>
     </div>
   </section>
+
+  <ul class="tasks" aria-label="Start here">
+    <li class="task" data-section="involvement">
+      <h2><a href={href('/clubs/')}>Club directory</a></h2>
+      <p>Every club on both campuses. Club execs keep their own page up to date.</p>
+    </li>
+    <li class="task" data-section="involvement">
+      <h2><a href={href('/room-booking/')}>Event &amp; room booking</a></h2>
+      <p>Sign in with your Western email and request a room. Approved bookings go on the events calendar automatically.</p>
+    </li>
+    <li class="task" data-section="medfriend">
+      <h2><a href={href('/medfriend/')}>MedFriend</a></h2>
+      <p>Preclerkship notes, questions and Anki decks, for Western students.</p>
+    </li>
+    <li class="task" data-section="involvement">
+      <h2><a href={href('/calendar/')}>Events calendar</a></h2>
+      <p>Council and club events for London and Windsor.</p>
+    </li>
+    <li class="task" data-section="council">
+      <h2><a href={href('/council/')}>Your council</a></h2>
+      <p>Who's on council and how it's organised.</p>
+    </li>
+    <li class="task" data-section="resources">
+      <h2><a href={href('/wellness/')}>Wellness</a></h2>
+      <p>Supports and wellness events.</p>
+    </li>
+  </ul>
 
   <section class="home-calendar" aria-label="Events calendar">
     <p class="demo-note">Demo: the real site shows the council's Google Calendar here. This month view uses sample events and the bookings approved in this browser.</p>
     <EventsCalendar />
   </section>
-
-  <ul class="tiles">
-    <li class="tile">
-      <h2><a href={href('/clubs/')}>Club directory</a></h2>
-      <p>Every club on both campuses. Club execs keep their own page up to date.</p>
-    </li>
-    <li class="tile">
-      <h2><a href={href('/room-booking/')}>Event &amp; room booking</a></h2>
-      <p>Sign in with your Western email and request a room. Approved bookings go on the events calendar automatically.</p>
-    </li>
-    <li class="tile">
-      <h2><a href={href('/calendar/')}>Events calendar</a></h2>
-      <p>Council and club events for London and Windsor.</p>
-    </li>
-    <li class="tile">
-      <h2><a href={href('/council/')}>Your council</a></h2>
-      <p>Who's on council and how it's organised.</p>
-    </li>
-    <li class="tile">
-      <h2><a href={href('/medfriend/')}>MedFriend</a></h2>
-      <p>Preclerkship notes, questions and Anki decks, for Western students.</p>
-    </li>
-    <li class="tile">
-      <h2><a href={href('/wellness/')}>Wellness</a></h2>
-      <p>Supports and wellness events.</p>
-    </li>
-  </ul>
 
   <section class="notice" aria-labelledby="try-h">
     <h2 id="try-h">Trying the demo</h2>

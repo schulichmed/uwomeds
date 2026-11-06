@@ -3,14 +3,14 @@ import DemoBanner from '../components/DemoBanner.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import { href } from '../lib/paths';
-// Rubik, the live site's typeface, self-hosted (Latin subset) so the demo makes no external requests.
-import '@fontsource/rubik/latin-400.css';
-import '@fontsource/rubik/latin-500.css';
-import '@fontsource/rubik/latin-700.css';
+import { SECTIONS, sectionFor } from '../components/sections';
+// Archivo (variable weight and width), self-hosted so pages make no external requests.
+import '@fontsource-variable/archivo/wdth.css';
 import '../styles/global.css';
 
 interface Props { title: string; description?: string }
 const { title, description = 'Schulich Hippocratic Council: council, clubs, room booking and resources for Schulich medical students.' } = Astro.props;
+const section = sectionFor(Astro.url.pathname);
 const fullTitle = title === 'Home' ? 'Hippocratic Council (demo)' : `${title} | Hippocratic Council (demo)`;
 ---
 <!doctype html>
@@ -23,10 +23,17 @@ const fullTitle = title === 'Home' ? 'Hippocratic Council (demo)' : `${title} | 
     <link rel="icon" type="image/png" href={href('/hippo-icon.png')} />
     <title>{fullTitle}</title>
   </head>
-  <body>
+  <body data-section={section}>
     <a class="skip-link" href="#main">Skip to main content</a>
     <DemoBanner />
     <Header />
+    {section && (
+      <nav class="thumb-index" aria-label="Sections">
+        {SECTIONS.map((s) => (
+          <a class={`thumb thumb-${s.id}`} href={href(s.home)} aria-current={s.id === section ? 'true' : undefined}>{s.label}</a>
+        ))}
+      </nav>
+    )}
     <main id="main" tabindex="-1">
       <slot name="full-bleed" />
       <div class="wrap">
