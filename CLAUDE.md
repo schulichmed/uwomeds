@@ -8,6 +8,7 @@ Astro 5 (static pages + server routes with `prerender = false`) on Cloudflare Pa
 ## Branches
 - `main`: the council demo (sample data, `localStorage`), published to https://schulichmed.github.io/uwomeds/ by `pages.yml`. Demo fixes go here, then merge `main` into `build`.
 - `build`: the real site. Agents work here; `deploy.yml` puts it on the beta site https://uwomeds.pages.dev. Noor merges `build` into `main` once, after beta sign-off.
+- `redesign`: the same site with a fresh look (Noor, 2026-11-06), at https://redesign.uwomeds.pages.dev. Features land on `build` first and are merged into `redesign`; `redesign` changes only the look (styles, layout, components, copy), never features or the database.
 - `src/lib/store.ts` is the demo's fake backend; each plan task replaces part of it with Supabase.
 
 ## Commands
