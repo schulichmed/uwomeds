@@ -9,7 +9,7 @@ interface MenuGroup { label: string; url?: string; items?: MenuItem[] }
 const link = (url: string) => (/^https?:/.test(url) ? url : href(url));
 
 // Matches the current site's primary menu (spec; plan Task 15). The menu is code, not content.
-// MedFriend sits under Resources so the top row matches the live site's five items.
+// MedFriend is its own top-level item: the one new menu entry (Noor, 2026-11-06).
 const menu: MenuGroup[] = [
   {
     label: 'Council',
@@ -28,7 +28,6 @@ const menu: MenuGroup[] = [
       { label: 'Educational', url: '/educational/' },
       { label: 'Wellness', url: '/wellness/' },
       { label: 'Research From Home', url: '/research-from-home/' },
-      { label: 'MedFriend', url: '/medfriend/' },
     ],
   },
   {
@@ -37,9 +36,9 @@ const menu: MenuGroup[] = [
       { label: 'Club Directory', url: '/clubs/' },
       { label: 'Calendar', url: '/calendar/' },
       { label: 'Event & Room Booking', url: '/room-booking/' },
-      { label: 'Club Event Report', url: '/club-event-report/' },
     ],
   },
+  { label: 'MedFriend', url: '/medfriend/' },
   {
     label: 'Links',
     items: QUICK_LINKS.map((l) => ({ label: `${l.label} \u2197`, url: l.url })),

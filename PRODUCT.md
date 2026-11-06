@@ -11,7 +11,7 @@ web
 Schulich medical students on the London and Windsor campuses, and the student leaders who keep the site current. **Students and club execs carry equal weight** (Noor, 2026-11-05): a design that helps one at the other's expense is wrong.
 
 - **Student**: anyone signed in with an @meds.uwo.ca or @uwo.ca address (both get the same access). Finds a club, a resource link, a council document or the events calendar; books a room for a club event. Often on a phone, between classes.
-- **Club exec**: a student on the yearly exec roster. Keeps their own club's page current (description, campus, socials, execs) and files club event reports. 169 clubs; on today's site 92 of them have no description, so editing has to feel quick and safe.
+- **Club exec**: a student on the yearly exec roster. Keeps their own club's page current (description, campus, socials, execs). 169 clubs; on today's site 92 of them have no description, so editing has to feel quick and safe.
 - **Page editor**: a council member (by default the President, Communications Director and IT Director) who edits council pages on the site, with every save versioned.
 - **Booking admin**: approves or declines room bookings for a campus; may be staff outside @meds.uwo.ca.
 - **IT Director**: owns the site and its accounts (`hippoit@uwo.ca`), changes every year and may not be technical.
@@ -37,7 +37,8 @@ The one place where a Schulich student's council, clubs and room booking live to
 ## Capabilities and Constraints
 
 - Parity with today is non-negotiable: Western-email sign-in, club directory where execs edit only their own club, room booking for signed-in students, content pages (council, resources, links, contact, documents, meetings and updates, sponsors, calendar).
-- Also: club event report form, contact form, Report a problem, admin pages for bookings and people, council org chart built from data, privacy page and terms.
+- MedFriend: its own top-level menu item; the same Western sign-in saves study progress and opens the module questions.
+- Also: contact form, Report a problem, admin pages for bookings and people, council org chart built from data, privacy page and terms.
 - MedFriend (a study resource) lives at `/medfriend` behind the same sign-in.
 - Exec emails show on club pages only with each exec's opt-in.
 - No third-party loads on council pages: fonts are self-hosted; Instagram loads only after a click.
@@ -55,7 +56,7 @@ The one place where a Schulich student's council, clubs and room booking live to
 
 - Real: Hippo's name, logo, colours, homepage illustration, public council role titles, the room-booking form's fields and Windsor room list, the menu structure of the current site.
 - Real public content (since 2026-11-05): the 134 current clubs' names, campuses and public descriptions, and the text of the public pages (Academic, Educational, Extracurricular, Wellness, Research From Home, Sponsors, Meetings and Updates, Documents, Links), minus dead links and any personal names, emails or phone numbers. MedFriend is the live site, embedded after sign-in.
-- Invented: every person (execs, admins, students: "Rowan Example", `exec14@meds.uwo.ca`), bookings and event reports. Never present these as real, and never add real student names, emails or photos.
+- Invented: every person (execs, admins, students: "Rowan Example", `exec14@meds.uwo.ca`) and bookings. Never present these as real, and never add real student names, emails or photos.
 - No testimonials, usage numbers or endorsements exist; do not invent them. The current-site audit (`docs/council/2026-10-25-current-site-audit.md` in the plan repo) is the factual case for the rebuild.
 
 ## Product Principles

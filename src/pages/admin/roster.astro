@@ -74,7 +74,7 @@ import { href } from '../../lib/paths';
             .join('')}</ul></li>`,
         )
         .join('')}</ul>
-${lockouts.length ? `<div class="warning-box" role="alert"><h2>Some people will lose edit access</h2><ul>${lockouts.map((r) => `<li>${esc(r.name)} (${esc(r.email)}) will no longer be able to edit ${esc(nameOf(r.clubSlug))} or send its event reports. ${r.email === session.email ? 'This is you. ' : ''}${PERSONAS.some((p) => p.email === r.email) ? 'This is one of the demo sign-in personas. ' : ''}Add them to the file if they should keep access.</li>`).join('')}</ul></div>` : ''}
+${lockouts.length ? `<div class="warning-box" role="alert"><h2>Some people will lose edit access</h2><ul>${lockouts.map((r) => `<li>${esc(r.name)} (${esc(r.email)}) will no longer be able to edit ${esc(nameOf(r.clubSlug))}. ${r.email === session.email ? 'This is you. ' : ''}${PERSONAS.some((p) => p.email === r.email) ? 'This is one of the demo sign-in personas. ' : ''}Add them to the file if they should keep access.</li>`).join('')}</ul></div>` : ''}
 <p><button type="button" class="button" id="apply-roster">Apply roster</button></p>`;
       document.getElementById('apply-roster')?.addEventListener('click', () => {
         if (!parsed) return;
