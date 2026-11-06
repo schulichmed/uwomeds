@@ -6,6 +6,11 @@ export function normaliseEmail(raw: string): string {
   return raw.replace(/\s+/g, '').toLowerCase();
 }
 
+/** True when a raw address (any case, stray spaces) is on an allowed domain. UX only: the DB decides. */
+export function isAllowedDomain(raw: string): boolean {
+  return isAllowedEmail(normaliseEmail(raw));
+}
+
 export function isAllowedEmail(email: string): boolean {
   const at = email.lastIndexOf('@');
   if (at < 1 || email.indexOf('@') !== at) return false;
