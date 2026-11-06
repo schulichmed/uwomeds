@@ -14,8 +14,8 @@ export interface Club {
   name: string;
   description: string;
   campuses: Campus[];
-  /** Directory category; when unset, the default from src/data/club-categories.ts. */
-  category?: import('../data/club-categories').ClubCategory;
+  /** Directory categories; when unset, the live site's from src/data/club-categories.ts. */
+  categories?: import('../data/club-categories').ClubCategory[];
   links: string[];
   execs: ClubExec[];
 }
