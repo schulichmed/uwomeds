@@ -10,6 +10,7 @@ export function getStaticPaths() {
   return CLUBS.map((club) => ({ params: { slug: club.slug }, props: { club } }));
 }
 const { club } = Astro.props as { club: Club };
+import { CLUB_CATEGORIES } from '../../../data/club-categories';
 ---
 <Base title={`Edit ${club.name}`}>
   <div id="edit-root" data-slug={club.slug}>
@@ -26,6 +27,14 @@ const { club } = Astro.props as { club: Club };
         <label for="description">Description</label>
         <span class="hint" id="description-hint">What your club does and who it's for. Up to 5000 characters. Leave a blank line between paragraphs.</span>
         <textarea id="description" maxlength="5000" aria-describedby="description-hint"></textarea>
+      </div>
+
+      <div class="field">
+        <label for="category">Category</label>
+        <span class="hint" id="category-hint">Where students find your club when they filter the directory.</span>
+        <select id="category" aria-describedby="category-hint">
+          {CLUB_CATEGORIES.map((c) => <option value={c.id}>{c.label}</option>)}
+        </select>
       </div>
 
       <fieldset id="campus-fieldset">
@@ -66,6 +75,8 @@ const { club } = Astro.props as { club: Club };
   import { href } from '../../../lib/paths';
   import { detectNetwork, isHttpUrl, networkIcon, NETWORK_LABEL } from '../../../lib/socials';
   import { canEditClub, getClub, getSession, saveClub, setFlash } from '../../../lib/store';
+  import { categoryOf } from '../../../lib/render-club';
+  import { CLUB_CATEGORIES, type ClubCategory } from '../../../data/club-categories';
   import type { Campus, Club, ClubExec } from '../../../lib/types';
 
   const MAX_LINKS = 6;
@@ -124,6 +135,8 @@ const { club } = Astro.props as { club: Club };
       cb.checked = c.campuses.includes(cb.value as Campus);
     });
     (document.getElementById('campus-missing') as HTMLElement).hidden = c.campuses.length > 0;
+    const categorySelect = document.getElementById('category') as HTMLSelectElement;
+    categorySelect.value = categoryOf(c) ?? CLUB_CATEGORIES[0].id;
     links.innerHTML = (c.links.length ? c.links : ['']).map(linkRow).join('');
     execs.innerHTML = c.execs.map(execRow).join('');
 
@@ -198,7 +211,7 @@ const { club } = Astro.props as { club: Club };
         errors.focus();
         return;
       }
-      const ok = saveClub({ ...c, description: description.value.trim(), campuses, links: urls, execs: execList });
+      const ok = saveClub({ ...c, description: description.value.trim(), category: categorySelect.value as ClubCategory, campuses, links: urls, execs: execList });
       setFlash(ok ? 'Saved. Your club page is updated.' : "Couldn't save: this browser is blocking storage.");
       window.location.href = href(`/clubs/${c.slug}/`);
     });

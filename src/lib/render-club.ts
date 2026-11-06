@@ -5,9 +5,19 @@
 import { esc } from './escape';
 import { href } from './paths';
 import { detectNetwork, instagramHandle, networkIcon, NETWORK_LABEL } from './socials';
+import { CATEGORY_BY_SLUG, CATEGORY_LABEL, type ClubCategory } from '../data/club-categories';
 import type { Club } from './types';
 
 const CAMPUS_NAME = { london: 'London', windsor: 'Windsor' } as const;
+
+export function categoryOf(club: Club): ClubCategory | undefined {
+  return club.category ?? CATEGORY_BY_SLUG[club.slug];
+}
+
+function categoryBadge(club: Club): string {
+  const cat = categoryOf(club);
+  return cat ? `<span class="badge badge-category">${esc(CATEGORY_LABEL[cat])}</span>` : '';
+}
 
 export function campusBadges(club: Club): string {
   if (!club.campuses.length) return '<span class="badge badge-none">Campus not listed</span>';
@@ -25,9 +35,9 @@ function paragraphs(text: string): string {
 
 export function clubCardHtml(club: Club): string {
   const summary = club.description.trim().split(/\n/)[0] ?? '';
-  return `<li class="club-card" data-campuses="${esc(club.campuses.join(' '))}" data-name="${esc(club.name.toLowerCase())}">
+  return `<li class="club-card" data-campuses="${esc(club.campuses.join(' '))}" data-category="${esc(categoryOf(club) ?? '')}" data-name="${esc(club.name.toLowerCase())}">
   <h2><a href="${href(`/clubs/${club.slug}/`)}">${esc(club.name)}</a></h2>
-  <p class="badges">${campusBadges(club)}</p>
+  <p class="badges">${campusBadges(club)} ${categoryBadge(club)}</p>
   ${summary ? `<p class="summary">${esc(summary.length > 140 ? `${summary.slice(0, 137)}...` : summary)}</p>` : ''}
 </li>`;
 }
@@ -78,7 +88,7 @@ export function clubPageHtml(club: Club, isOwnExec: boolean): string {
       ? `<div class="notice"><a href="${editUrl}">Add your club's description and socials</a></div>`
       : '';
   const edit = isOwnExec ? `<p><a class="button" href="${editUrl}">Edit this club</a></p>` : '';
-  return `<p class="badges">${campusBadges(club)}</p>
+  return `<p class="badges">${campusBadges(club)} ${categoryBadge(club)}</p>
 ${edit}${nudge}
 ${club.description.trim() ? `<section class="club-description">${paragraphs(club.description)}</section>` : ''}
 ${socialsHtml(club)}
