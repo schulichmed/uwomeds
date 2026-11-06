@@ -8,7 +8,7 @@ import Base from '../../layouts/Base.astro';
 <script>
   import { requireSignIn, showForbidden } from '../../lib/gate';
   import { href } from '../../lib/paths';
-  import { canManageRoster, isAnyAdmin, isBookingAdmin, isPageEditor, listBookings, listEventReports } from '../../lib/store';
+  import { canManageRoster, isAnyAdmin, isBookingAdmin, isPageEditor, listBookings } from '../../lib/store';
 
   const root = document.getElementById('admin-root') as HTMLElement;
   const session = requireSignIn();
@@ -21,11 +21,8 @@ import Base from '../../layouts/Base.astro';
       items.push(`<li class="tile"><h2><a href="${href('/admin/bookings/')}">Bookings</a></h2><p>${pending} waiting for a decision.</p></li>`);
     }
     if (canManageRoster(session)) {
-      const reports = listEventReports().length;
       items.push(
-        `<li class="tile"><h2><a href="${href('/admin/roster/')}">Clubs and exec roster</a></h2><p>Upload this year's exec roster. It decides who can edit each club's page.</p></li>`,
-        `<li class="tile"><h2>Club event reports</h2><p>${reports} received in this browser. On the real site you can export them as a spreadsheet.</p></li>`,
-      );
+        `<li class="tile"><h2><a href="${href('/admin/roster/')}">Clubs and exec roster</a></h2><p>Upload this year's exec roster. It decides who can edit each club's page.</p></li>`);
     }
     if (session.role === 'site_admin') {
       items.push(

@@ -78,17 +78,6 @@ export interface RosterRow {
   role: string;
 }
 
-export interface EventReport {
-  number: number;
-  clubSlug: string;
-  eventTitle: string;
-  date: string; // YYYY-MM-DD
-  attendance: number;
-  notes: string;
-  submittedBy: string;
-  submittedAt: string; // ISO
-}
-
 export interface PageVersion {
   title: string;
   body: string;

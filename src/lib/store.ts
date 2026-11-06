@@ -9,7 +9,7 @@ import { SAMPLE_BOOKINGS, SAMPLE_EVENTS } from '../data/bookings';
 import { CLUBS } from '../data/clubs';
 import { COUNCIL_PAGES } from '../data/pages';
 import { PERSONAS } from '../data/people';
-import type { Booking, CalendarEvent, Club, ClubExec, EventReport, PageVersion, Role, RosterRow, Session } from './types';
+import type { Booking, CalendarEvent, Club, ClubExec, PageVersion, Role, RosterRow, Session } from './types';
 
 // v2: real club slugs replaced the sample ones, so v1 data is ignored.
 const PREFIX = 'uwomeds-demo:v2:';
@@ -21,7 +21,6 @@ const KEY = {
   pages: `${PREFIX}pages`,
   reportCounter: `${PREFIX}report-counter`,
   roster: `${PREFIX}roster`,
-  eventReports: `${PREFIX}event-reports`,
   flash: `${PREFIX}flash`,
   clubUndo: `${PREFIX}club-undo`,
   bookingUndo: `${PREFIX}booking-undo`,
@@ -241,20 +240,6 @@ export function applyRoster(rows: RosterRow[]): { clubs: number; execs: number; 
     saveClub({ ...club, execs });
   });
   return { clubs: slugs.size, execs: rows.length, undo };
-}
-
-/* ---------- Club event reports ---------- */
-
-export function listEventReports(clubSlug?: string): EventReport[] {
-  const all = read<EventReport[]>(KEY.eventReports, []);
-  return clubSlug ? all.filter((r) => r.clubSlug === clubSlug) : all;
-}
-
-export function addEventReport(report: Omit<EventReport, 'number' | 'submittedAt'>): EventReport {
-  const all = listEventReports();
-  const saved: EventReport = { ...report, number: (all.at(-1)?.number ?? 100) + 1, submittedAt: new Date().toISOString() };
-  write(KEY.eventReports, [...all, saved]);
-  return saved;
 }
 
 /* ---------- Bookings ---------- */

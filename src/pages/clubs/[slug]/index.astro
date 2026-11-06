@@ -22,30 +22,13 @@ const { club } = Astro.props as { club: Club };
   import { esc } from '../../../lib/escape';
   import { href } from '../../../lib/paths';
   import { clubPageHtml } from '../../../lib/render-club';
-  import { canEditClub, getClub, getSession, listEventReports } from '../../../lib/store';
+  import { canEditClub, getClub, getSession } from '../../../lib/store';
 
   const body = document.getElementById('club-body') as HTMLElement;
   const slug = body.dataset.slug ?? '';
   const club = getClub(slug);
   const isOwnExec = canEditClub(getSession(), slug);
   if (club) body.innerHTML = clubPageHtml(club, isOwnExec);
-
-  // The club's event reports are visible to its own execs only.
-  if (club && isOwnExec) {
-    const reports = listEventReports(slug);
-    const items = reports
-      .map(
-        (r) =>
-          `<li><strong>#${r.number} ${esc(r.eventTitle)}</strong><br>${esc(new Date(`${r.date}T12:00`).toLocaleDateString('en-CA', { dateStyle: 'medium' }))} · ${r.attendance} attended · sent by ${esc(r.submittedBy)}${r.notes ? `<br><span class="muted">${esc(r.notes)}</span>` : ''}</li>`,
-      )
-      .join('');
-    body.insertAdjacentHTML(
-      'beforeend',
-      `<section id="event-reports" aria-labelledby="reports-h"><h2 id="reports-h">Event reports (execs only)</h2>${
-        reports.length ? `<ul class="agenda">${items}</ul>` : '<p class="muted">No event reports yet.</p>'
-      }<p><a class="button secondary small" href="${href('/club-event-report/')}">Send an event report</a></p></section>`,
-    );
-  }
 
   body.addEventListener('click', (ev) => {
     const button = (ev.target as HTMLElement).closest<HTMLButtonElement>('[data-ig-toggle]');
