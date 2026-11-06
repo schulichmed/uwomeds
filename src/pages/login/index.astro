@@ -1,49 +1,56 @@
 ---
+// Step 1 of sign-in: email in, a code and a sign-in link out (plan Task 3).
+export const prerender = false;
 import Base from '../../layouts/Base.astro';
 import PrivacyNotice from '../../components/PrivacyNotice.astro';
 import { IT_CONTACT } from '../../data/people';
+import { DOMAIN_ERROR, normaliseEmail } from '../../lib/email-domain';
+import { createServerClient, safeNext } from '../../lib/supabase';
+
+const NEXT_COOKIE = 'uwomeds_next';
+let email = '';
+let error = '';
+const next = safeNext(Astro.url.searchParams.get('next'));
+const supabase = createServerClient(Astro);
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  email = normaliseEmail(String(form.get('email') ?? ''));
+  const postedNext = safeNext(String(form.get('next') ?? ''));
+  if (!supabase) {
+    error = "Sign-in isn't switched on yet. Please try again later.";
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    error = DOMAIN_ERROR;
+  } else {
+    const { error: otpError } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
+    if (!otpError) {
+      // Remember where to go after the emailed link is used (same browser only).
+      Astro.cookies.set(NEXT_COOKIE, postedNext, { path: '/', httpOnly: true, sameSite: 'lax', maxAge: 3600 });
+      const params = new URLSearchParams({ email });
+      if (postedNext !== '/') params.set('next', postedNext);
+      return Astro.redirect(`/login/code/?${params}`, 303);
+    }
+    // The database refuses addresses outside the allowed domains; Supabase reports that
+    // as a failure to save the new user.
+    if (otpError.status === 429) error = 'Too many sign-in emails. Wait a minute, then try again.';
+    else if (/database error|not allowed/i.test(otpError.message)) error = DOMAIN_ERROR;
+    else error = "We couldn't send the email. Try again in a minute.";
+  }
+}
 ---
 <Base title="Sign in">
   <h1>Sign in</h1>
-  <p class="lead">No password. We email you a 6-digit code.</p>
-  <form id="email-form" class="stack" novalidate>
-    <div class="field" id="email-field">
+  <p class="lead">No password. We email you a 6-digit code and a sign-in link.</p>
+  <form method="post" class="stack" novalidate>
+    <input type="hidden" name="next" value={next} />
+    <div class={`field${error ? ' has-error' : ''}`}>
       <label for="email">Western email</label>
       <span class="hint" id="email-hint">@meds.uwo.ca or @uwo.ca</span>
-      <input type="email" id="email" name="email" autocomplete="email" inputmode="email" aria-describedby="email-hint email-error" required />
-      <p class="error" id="email-error" hidden></p>
+      <input type="email" id="email" name="email" value={email} autocomplete="email" inputmode="email"
+        aria-describedby={error ? 'email-hint email-error' : 'email-hint'} aria-invalid={error ? 'true' : undefined} required autofocus />
+      {error && <p class="error" id="email-error" role="alert">{error}</p>}
     </div>
     <PrivacyNotice contact={IT_CONTACT} />
     <button class="button" type="submit">Email me a code</button>
   </form>
-  <p class="demo-note">Demo: sample addresses to try are <code>student1@meds.uwo.ca</code> (student), <code>exec1@meds.uwo.ca</code> (Surgery Interest Group exec), <code>bookingadmin@uwo.ca</code>, <code>editor@meds.uwo.ca</code>, <code>communityrelations.sample@meds.uwo.ca</code> and <code>hippoit@uwo.ca</code>. Any other @meds.uwo.ca or @uwo.ca address signs in as a student.</p>
 </Base>
-
-<script>
-  import { DOMAIN_ERROR, isAllowedEmail, normaliseEmail } from '../../lib/email-domain';
-  import { href } from '../../lib/paths';
-  import { startSignIn } from '../../lib/store';
-
-  const form = document.getElementById('email-form') as HTMLFormElement;
-  const input = document.getElementById('email') as HTMLInputElement;
-  const error = document.getElementById('email-error') as HTMLElement;
-  const field = document.getElementById('email-field') as HTMLElement;
-  const next = new URLSearchParams(window.location.search).get('next') ?? '';
-
-  form.addEventListener('submit', (ev) => {
-    ev.preventDefault();
-    const email = normaliseEmail(input.value);
-    if (!isAllowedEmail(email)) {
-      error.textContent = DOMAIN_ERROR;
-      error.hidden = false;
-      field.classList.add('has-error');
-      input.setAttribute('aria-invalid', 'true');
-      input.focus();
-      return;
-    }
-    startSignIn(email);
-    const params = new URLSearchParams();
-    if (next) params.set('next', next);
-    window.location.href = href(`/login/code/${params.size ? `?${params}` : ''}`);
-  });
-</script>

@@ -31,6 +31,8 @@ export interface Session {
   name: string;
   role: Role;
   clubSlug?: string;
+  /** True for a real Supabase sign-in (not a demo persona). */
+  real?: boolean;
 }
 
 export type BookingStatus = 'pending' | 'approved' | 'declined';

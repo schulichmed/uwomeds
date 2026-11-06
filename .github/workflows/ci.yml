@@ -31,6 +31,14 @@ jobs:
       - run: pnpm test
       - run: pnpm exec supabase start
       - run: pnpm db:test
+      - name: Point the site at the local Supabase
+        run: |
+          eval "$(pnpm exec supabase status -o env)"
+          {
+            echo "SUPABASE_URL=$API_URL"
+            echo "SUPABASE_ANON_KEY=$ANON_KEY"
+          } > .dev.vars
+          test -n "$ANON_KEY"
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e
       - if: failure()

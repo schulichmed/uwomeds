@@ -9,7 +9,9 @@ const session = getSession();
 
 // Demo persona switcher
 const select = document.getElementById('persona-select') as HTMLSelectElement | null;
-if (select) {
+// Signed in for real: the persona switcher would only confuse, so hide it.
+if (session?.real) (select?.closest('.demo-controls') as HTMLElement | null)?.setAttribute('hidden', '');
+if (select && !session?.real) {
   select.value = session?.email ?? '';
   if (session && select.value !== session.email) {
     const opt = new Option(`Signed in as ${session.email}`, session.email);
@@ -37,7 +39,11 @@ if (auth && session) {
     parts.push(`<a href="${href(`/clubs/${session.clubSlug}/`)}">My club${club ? `: ${esc(club.name)}` : ''}</a>`);
   }
   if (isAnyAdmin(session)) parts.push(`<a href="${href('/admin/')}">Admin</a>`);
-  parts.push('<button type="button" class="button small" id="sign-out">Sign out</button>');
+  parts.push(
+    session.real
+      ? '<form method="post" action="/logout/" class="inline-form"><button type="submit" class="button small">Sign out</button></form>'
+      : '<button type="button" class="button small" id="sign-out">Sign out</button>',
+  );
   auth.innerHTML = parts.join('');
   document.getElementById('sign-out')?.addEventListener('click', () => {
     signOut();

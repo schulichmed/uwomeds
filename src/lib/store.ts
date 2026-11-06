@@ -67,7 +67,23 @@ export function resetDemo(): void {
 
 /* ---------- Session and roles ---------- */
 
+/** The email from the real sign-in's display cookie (set by /login/code and /login/confirm). */
+function realSignInEmail(): string | null {
+  try {
+    const m = /(?:^|;\s*)uwomeds_who=([^;]*)/.exec(document.cookie);
+    return m ? decodeURIComponent(m[1]) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** A real sign-in wins; otherwise the demo persona (sample data, this browser only). */
 export function getSession(): Session | null {
+  const email = realSignInEmail();
+  if (email) {
+    const info = roleForEmail(email);
+    return { email, name: info.name, role: info.role, clubSlug: info.clubSlug, real: true };
+  }
   return read<Session | null>(KEY.session, null);
 }
 

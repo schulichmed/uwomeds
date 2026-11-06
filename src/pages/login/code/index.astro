@@ -1,64 +1,56 @@
 ---
+// Step 2 of sign-in: type the 6-digit code from the email.
+export const prerender = false;
 import Base from '../../../layouts/Base.astro';
-import { href } from '../../../lib/paths';
+import { normaliseEmail } from '../../../lib/email-domain';
+import { createServerClient, safeNext, setWhoCookie } from '../../../lib/supabase';
+
+let email = normaliseEmail(Astro.url.searchParams.get('email') ?? '');
+let next = safeNext(Astro.url.searchParams.get('next'));
+let error = '';
+const supabase = createServerClient(Astro);
+
+if (Astro.request.method === 'POST' && supabase) {
+  const form = await Astro.request.formData();
+  email = normaliseEmail(String(form.get('email') ?? ''));
+  next = safeNext(String(form.get('next') ?? ''));
+  const token = String(form.get('code') ?? '').replace(/\s+/g, '');
+  const { data, error: verifyError } = await supabase.auth.verifyOtp({ email, token, type: 'email' });
+  if (!verifyError && data.user?.email) {
+    setWhoCookie(Astro, data.user.email);
+    Astro.cookies.delete('uwomeds_next', { path: '/' });
+    return Astro.redirect(next, 303);
+  }
+  error = "That code doesn't match or has expired. Check the latest email, or start again.";
+}
 ---
 <Base title="Enter your code">
-  <div id="no-pending" hidden>
-    <h1>Start again</h1>
-    <p>We don't have a sign-in in progress in this browser. <a href={href('/login/')}>Enter your email</a> to get a code.</p>
-  </div>
-  <div id="code-step" hidden>
-    <h1>We emailed you a 6-digit code</h1>
-    <p class="lead">Sent to <strong id="sent-to"></strong>. It's valid for 10 minutes. The email also has a sign-in link.</p>
-    <div class="demo-note" aria-live="polite">
-      <p><strong>Demo:</strong> no email is sent. Your code is</p>
-      <p class="code-display" id="demo-code"></p>
-    </div>
-    <form id="code-form" class="stack" novalidate>
-      <div class="field" id="code-field">
-        <label for="code">6-digit code</label>
-        <input type="text" id="code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" aria-describedby="code-error" required />
-        <p class="error" id="code-error" hidden></p>
-      </div>
-      <p class="button-row">
-        <button class="button" type="submit">Sign in</button>
-        <a href={href('/login/')}>Use a different email</a>
-      </p>
-    </form>
-  </div>
-</Base>
-
-<script>
-  import { href } from '../../../lib/paths';
-  import { clearPendingSignIn, getPendingSignIn, setFlash, signIn } from '../../../lib/store';
-
-  const pending = getPendingSignIn();
-  const next = new URLSearchParams(window.location.search).get('next') ?? '/';
-  if (!pending) {
-    (document.getElementById('no-pending') as HTMLElement).hidden = false;
-  } else {
-    (document.getElementById('code-step') as HTMLElement).hidden = false;
-    (document.getElementById('sent-to') as HTMLElement).textContent = pending.email;
-    (document.getElementById('demo-code') as HTMLElement).textContent = pending.code;
-    const input = document.getElementById('code') as HTMLInputElement;
-    const error = document.getElementById('code-error') as HTMLElement;
-    input.focus();
-    document.getElementById('code-form')?.addEventListener('submit', (ev) => {
-      ev.preventDefault();
-      const code = input.value.replace(/\s+/g, '');
-      if (code !== pending.code) {
-        error.textContent = "That code doesn't match. Check the latest email and try again.";
-        error.hidden = false;
-        document.getElementById('code-field')?.classList.add('has-error');
-        input.setAttribute('aria-invalid', 'true');
-        input.focus();
-        return;
-      }
-      const session = signIn(pending.email);
-      clearPendingSignIn();
-      setFlash(`Signed in as ${session.email}.`);
-      const safeNext = next.startsWith('/') && !next.startsWith('//') ? next : '/';
-      window.location.href = href(safeNext);
-    });
+  {
+    email ? (
+      <>
+        <h1>Check your email</h1>
+        <p class="lead">We sent a 6-digit code and a sign-in link to <strong>{email}</strong>. Use either one; both work for 1 hour.</p>
+        <form method="post" class="stack" novalidate>
+          <input type="hidden" name="email" value={email} />
+          <input type="hidden" name="next" value={next} />
+          <div class={`field${error ? ' has-error' : ''}`}>
+            <label for="code">6-digit code</label>
+            <input type="text" id="code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6"
+              pattern="[0-9]{6}" aria-describedby={error ? 'code-error' : undefined} aria-invalid={error ? 'true' : undefined} required autofocus />
+            {error && <p class="error" id="code-error" role="alert">{error}</p>}
+          </div>
+          <p class="button-row">
+            <button class="button" type="submit">Sign in</button>
+            <a href="/login/">Use a different email</a>
+          </p>
+        </form>
+        <p class="muted">Nothing arrived? Check your junk folder, then <a href="/login/">ask for a new code</a>.</p>
+      </>
+    ) : (
+      <>
+        <h1>Start again</h1>
+        <p><a href="/login/">Enter your email</a> to get a code.</p>
+      </>
+    )
   }
-</script>
+</Base>

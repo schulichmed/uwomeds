@@ -1,0 +1,44 @@
+---
+// The link in the sign-in email lands here. Opening the page does nothing on its own:
+// Microsoft 365 Safe Links opens every link in Western mail, and a one-click link would be
+// used up before the student sees it. Pressing Continue (a POST) signs in.
+export const prerender = false;
+import Base from '../../../layouts/Base.astro';
+import { createServerClient, safeNext, setWhoCookie } from '../../../lib/supabase';
+
+let tokenHash = Astro.url.searchParams.get('token_hash') ?? '';
+let error = '';
+const supabase = createServerClient(Astro);
+
+if (Astro.request.method === 'POST' && supabase) {
+  const form = await Astro.request.formData();
+  tokenHash = String(form.get('token_hash') ?? '');
+  const { data, error: verifyError } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'email' });
+  if (!verifyError && data.user?.email) {
+    setWhoCookie(Astro, data.user.email);
+    const next = safeNext(Astro.cookies.get('uwomeds_next')?.value);
+    Astro.cookies.delete('uwomeds_next', { path: '/' });
+    return Astro.redirect(next, 303);
+  }
+  error = 'This sign-in link has expired or was already used.';
+}
+---
+<Base title="Continue signing in">
+  {
+    error || !tokenHash ? (
+      <>
+        <h1>Sign in again</h1>
+        <p role="alert">{error || 'This link is incomplete.'} If you still have the email, type its 6-digit code instead, or <a href="/login/">ask for a new one</a>.</p>
+      </>
+    ) : (
+      <>
+        <h1>Continue signing in</h1>
+        <p class="lead">Press Continue to finish signing in to uwomeds.com.</p>
+        <form method="post">
+          <input type="hidden" name="token_hash" value={tokenHash} />
+          <button class="button" type="submit">Continue</button>
+        </form>
+      </>
+    )
+  }
+</Base>
