@@ -1,0 +1,14 @@
+{
+  "name": "uwomeds redesign: the council's handbook",
+  "source": "src/styles/global.css",
+  "color": {
+    "purple": "#582c83", "purple-dark": "#45226a", "purple-deep": "#2e1747", "purple-tint": "#f1ebf8", "purple-line": "#d7cbe6",
+    "n0": "#ffffff", "n1": "#f7f5fb", "n2": "#efecf5", "n3": "#dcd6e6", "n4": "#8a8199", "n5": "#625a70", "n6": "#453e52", "n7": "#241d31",
+    "council": "#582c83", "resources": "#0f6b5c", "involvement": "#e2a72e", "involvement-ink": "#7d5300", "medfriend": "#c2412d",
+    "ok": "#1d6a3a", "warn": "#6f4700", "bad": "#9b1c1c"
+  },
+  "font": { "family": "Archivo Variable", "weight": "100 900", "stretch": "62% 125%" },
+  "radius": { "control": "8px", "card": "12px", "surface": "14px" },
+  "shadow": "0 1px 2px rgba(36,29,49,.06), 0 8px 24px -14px rgba(46,23,71,.35)",
+  "ease": "cubic-bezier(0.16, 1, 0.3, 1)"
+}

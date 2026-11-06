@@ -2,12 +2,20 @@
 import Base from '../layouts/Base.astro';
 import EventsCalendar from '../components/EventsCalendar.astro';
 import { href } from '../lib/paths';
+import { PHOTOS } from '../components/photos';
+const hero = PHOTOS.benchGroup;
 ---
 <Base title="Home">
   <section class="cover" slot="full-bleed" aria-labelledby="hero-h">
     <div class="wrap cover-inner">
-      <h1 id="hero-h">Schulich Meds</h1>
-      <p class="cover-lead">Your council, your clubs and room booking in one place. Run by students, behind your Western email.</p>
+      <div class="cover-text">
+        <h1 id="hero-h">Schulich Meds</h1>
+        <p class="cover-lead">Your council, your clubs and room booking in one place. Run by students, behind your Western email.</p>
+      </div>
+      <figure class="cover-photo">
+        <img src={href(hero.file)} srcset={`${href(hero.small!)} 800w, ${href(hero.file)} ${hero.width}w`} sizes="(max-width: 860px) 100vw, 640px"
+          width={hero.width} height={hero.height} alt={hero.alt} fetchpriority="high" />
+      </figure>
     </div>
   </section>
 

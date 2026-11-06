@@ -236,7 +236,7 @@ input[type=checkbox], input[type=radio] { width: 1.15rem; height: 1.15rem; accen
 /* Home: the handbook cover. Purple band, expanded display type, tasks overlapping its lower edge. */
 .cover { background: var(--purple); color: var(--on-purple); }
 .cover-inner { padding-top: clamp(40px, 7vw, 76px); padding-bottom: clamp(88px, 11vw, 132px); }
-.cover h1 { color: var(--on-purple); font-size: clamp(3rem, 10vw, 6rem); font-weight: 800; font-stretch: 122%; letter-spacing: -0.025em; line-height: 0.95; margin: 0 0 18px; }
+.cover h1 { color: var(--on-purple); font-size: clamp(3rem, 8vw, 5.5rem); font-weight: 800; font-stretch: 122%; letter-spacing: -0.025em; line-height: 0.95; margin: 0 0 18px; }
 .cover-lead { font-size: clamp(1.1rem, 2vw, 1.35rem); line-height: 1.45; color: var(--on-purple-soft); max-width: 44ch; margin: 0; }
 .tasks { list-style: none; padding: 0; margin: calc(-1 * clamp(64px, 8vw, 96px)) 0 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; position: relative; }
 .task { position: relative; background: #fff; border-radius: var(--radius-lg); padding: 26px 22px 20px; box-shadow: var(--shadow); max-width: none; transition: transform 0.35s var(--ease), box-shadow 0.35s var(--ease); }
@@ -256,6 +256,25 @@ input[type=checkbox], input[type=radio] { width: 1.15rem; height: 1.15rem; accen
   .task p { display: none; }
 }
 .home-calendar { margin: 40px 0 28px; }
+.cover-inner { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 24px 48px; align-items: center; }
+.cover-text { min-width: 0; }
+.cover-photo { margin: 0; align-self: stretch; min-height: 300px; border-radius: var(--radius-lg); overflow: hidden; background: var(--purple-dark); }
+.cover-photo img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 18%; }
+@media (max-width: 860px) {
+  .cover-inner { grid-template-columns: 1fr; }
+  .cover-photo { min-height: 0; aspect-ratio: 16 / 7; }
+}
+
+/* Section photo: a wide strip under the section rule, before the page heading */
+.page-photo { margin: 28px 0 0; height: clamp(120px, 20vw, 240px); border-radius: var(--radius-lg); overflow: hidden; background: var(--n2); }
+.page-photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.page-photo + * h1, .wrap:has(> .page-photo) + .wrap h1:first-of-type { margin-top: 1.6rem; }
+
+/* Sign-in pages: the form beside a photo */
+.auth-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr); gap: 48px; align-items: start; }
+.auth-photo { margin: 2.4rem 0 0; border-radius: var(--radius-lg); overflow: hidden; aspect-ratio: 4 / 3; background: var(--n2); }
+.auth-photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
+@media (max-width: 860px) { .auth-split { grid-template-columns: 1fr; gap: 0; } .auth-photo { display: none; } }
 
 /* Clubs */
 .club-filters { display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: flex-end; margin: 18px 0 14px; padding: 18px 20px; background: var(--n1); border-radius: var(--radius-lg); }
