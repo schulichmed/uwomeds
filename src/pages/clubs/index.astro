@@ -51,7 +51,7 @@ import { CLUB_CATEGORIES } from '../../data/club-categories';
     const campus = (document.querySelector('input[name=campus]:checked') as HTMLInputElement | null)?.value ?? '';
     let shown = 0;
     list.querySelectorAll<HTMLLIElement>('.club-card').forEach((li) => {
-      const ok = (!q || (li.dataset.name ?? '').includes(q)) && (!category.value || li.dataset.category === category.value) && (!campus || (campus === 'none' ? !li.dataset.campuses : (li.dataset.campuses ?? '').split(' ').includes(campus)));
+      const ok = (!q || (li.dataset.name ?? '').includes(q)) && (!category.value || (li.dataset.categories ?? '').split(' ').includes(category.value)) && (!campus || (campus === 'none' ? !li.dataset.campuses : (li.dataset.campuses ?? '').split(' ').includes(campus)));
       li.hidden = !ok;
       if (ok) shown++;
     });

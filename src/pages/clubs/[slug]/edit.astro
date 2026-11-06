@@ -29,13 +29,13 @@ import { CLUB_CATEGORIES } from '../../../data/club-categories';
         <textarea id="description" maxlength="5000" aria-describedby="description-hint"></textarea>
       </div>
 
-      <div class="field">
-        <label for="category">Category</label>
-        <span class="hint" id="category-hint">Where students find your club when they filter the directory.</span>
-        <select id="category" aria-describedby="category-hint">
-          {CLUB_CATEGORIES.map((c) => <option value={c.id}>{c.label}</option>)}
-        </select>
-      </div>
+      <fieldset id="category-fieldset">
+        <legend>Category</legend>
+        <p class="hint">Where students find your club when they filter the directory. Choose one or more.</p>
+        <div class="choices">
+          {CLUB_CATEGORIES.map((c) => <label><input type="checkbox" name="category" value={c.id} /> {c.label}</label>)}
+        </div>
+      </fieldset>
 
       <fieldset id="campus-fieldset">
         <legend>Campus</legend>
@@ -75,8 +75,8 @@ import { CLUB_CATEGORIES } from '../../../data/club-categories';
   import { href } from '../../../lib/paths';
   import { detectNetwork, isHttpUrl, networkIcon, NETWORK_LABEL } from '../../../lib/socials';
   import { canEditClub, getClub, getSession, saveClub, setFlash } from '../../../lib/store';
-  import { categoryOf } from '../../../lib/render-club';
-  import { CLUB_CATEGORIES, type ClubCategory } from '../../../data/club-categories';
+  import { categoriesOf } from '../../../lib/render-club';
+  import type { ClubCategory } from '../../../data/club-categories';
   import type { Campus, Club, ClubExec } from '../../../lib/types';
 
   const MAX_LINKS = 6;
@@ -135,8 +135,10 @@ import { CLUB_CATEGORIES } from '../../../data/club-categories';
       cb.checked = c.campuses.includes(cb.value as Campus);
     });
     (document.getElementById('campus-missing') as HTMLElement).hidden = c.campuses.length > 0;
-    const categorySelect = document.getElementById('category') as HTMLSelectElement;
-    categorySelect.value = categoryOf(c) ?? CLUB_CATEGORIES[0].id;
+    const current = categoriesOf(c);
+    document.querySelectorAll<HTMLInputElement>('input[name=category]').forEach((cb) => {
+      cb.checked = current.includes(cb.value as ClubCategory);
+    });
     links.innerHTML = (c.links.length ? c.links : ['']).map(linkRow).join('');
     execs.innerHTML = c.execs.map(execRow).join('');
 
@@ -183,6 +185,10 @@ import { CLUB_CATEGORIES } from '../../../data/club-categories';
       const campuses = Array.from(document.querySelectorAll<HTMLInputElement>('input[name=campus]:checked')).map(
         (cb) => cb.value as Campus,
       );
+      const categories = Array.from(document.querySelectorAll<HTMLInputElement>('input[name=category]:checked')).map(
+        (cb) => cb.value as ClubCategory,
+      );
+      if (!categories.length) problems.push('Choose at least one category.');
       if (!campuses.length) problems.push("Choose your club's campus: London, Windsor or both.");
       const urls = Array.from(links.querySelectorAll<HTMLInputElement>('.link-input'))
         .map((i) => i.value.trim())
@@ -211,7 +217,7 @@ import { CLUB_CATEGORIES } from '../../../data/club-categories';
         errors.focus();
         return;
       }
-      const ok = saveClub({ ...c, description: description.value.trim(), category: categorySelect.value as ClubCategory, campuses, links: urls, execs: execList });
+      const ok = saveClub({ ...c, description: description.value.trim(), categories, campuses, links: urls, execs: execList });
       setFlash(ok ? 'Saved. Your club page is updated.' : "Couldn't save: this browser is blocking storage.");
       window.location.href = href(`/clubs/${c.slug}/`);
     });
