@@ -258,18 +258,21 @@ input[type=checkbox], input[type=radio] { width: 1.15rem; height: 1.15rem; accen
 
 /* Home cover: three prints tipped onto the purple band, hanging over its lower edge */
 .cover { position: relative; }
-.cover-inner { position: relative; display: grid; grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr); gap: 32px; align-items: start; padding-bottom: clamp(48px, 5vw, 72px); }
-.cover-text { position: relative; z-index: 1; }
-.cover-prints { position: relative; align-self: stretch; }
+.cover-inner { position: relative; display: block; min-height: 470px; padding-bottom: 56px; }
+.cover-text { position: relative; z-index: 1; max-width: 46%; }
+.cover-text .cover-lead { max-width: 31ch; }
+.cover-prints { position: absolute; inset: 0 24px; }
 .cover-prints .print { position: absolute; }
-.print-a { width: 60%; right: 0; top: -14px; transform: rotate(2deg); z-index: 2; }
-.print-b { width: 44%; left: -2%; top: 52%; transform: rotate(-3deg); z-index: 1; }
-.print-c { width: 36%; right: -3%; top: 96%; transform: rotate(-1.5deg); z-index: 3; }
+.print-a { width: 35%; right: 0; top: 13%; transform: rotate(2deg); z-index: 2; }
+.print-b { width: 27%; right: 28.5%; top: 55%; transform: rotate(-3deg); z-index: 1; }
+.print-c { width: 22%; right: 6%; top: 66%; transform: rotate(-1.5deg); z-index: 3; }
 .cover-prints .print:hover { transform: rotate(0deg) scale(1.02); z-index: 4; }
-.tasks { margin-top: clamp(96px, 9vw, 128px); }
+.tasks { margin-top: clamp(72px, 6vw, 92px); }
 @media (max-width: 860px) {
-  .cover-inner { grid-template-columns: 1fr; gap: 20px; padding-bottom: 0; }
-  .cover-prints { height: 150px; margin: 0 auto -44px; width: min(100%, 420px); }
+  .cover-inner { min-height: 0; padding-bottom: 0; }
+  .cover-text { max-width: none; }
+  .cover-text .cover-lead { max-width: 44ch; }
+  .cover-prints { position: relative; inset: auto; height: 150px; margin: 20px auto -44px; width: min(100%, 420px); }
   .cover-prints .print { padding: 6px; }
   .print-a { width: 52%; left: 24%; right: auto; top: 0; transform: rotate(1.5deg); }
   .print-b { width: 42%; left: 0; top: 34px; transform: rotate(-6deg); }
