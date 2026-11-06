@@ -4,7 +4,7 @@ The `redesign` look for uwomeds.com, chosen by Noor on 2026-11-06 ("Orientation 
 
 ## Idea
 
-The site reads like the council's own orientation handbook: a purple cover, four colour-coded sections, a planner-style calendar, and real Schulich photos. Purple marks where you are and what to do next.
+The site reads like the council's own orientation handbook: a purple cover, four colour-coded sections, a planner-style calendar, and real Schulich photos tipped in as prints. Purple marks where you are and what to do next.
 
 ## Colour
 
@@ -39,17 +39,19 @@ Radii: 8px controls, 12px cards, 14px large surfaces and photos, pills only for 
 
 ## Components
 
-- **Home cover**: purple band, h1 and one sentence left, photo right (stacked on phones). Six task cards overlap the band's lower edge, each with a small section-colour tab on top; the whole card is the link.
-- **Section photo**: one wide photo per landing page under the section rule (`src/components/photos.ts` maps paths to photos). Decorative (`alt=""`); none on admin, edit, club or MedFriend pages.
-- **Sign-in pages**: form beside a photo (layout only; hidden under 860px).
+- **Print** (`src/components/Print.astro`): a photo as a real print, 10px white border (6px on phones), no caption, optional tape strip, set 1.5 to 6 degrees off straight, one soft offset shadow. The only way photos appear on the site.
+- **Home cover**: purple band, h1 and one sentence left; three prints tipped onto the right (bench group with tape, white coats, Windsor hallway), the lowest hanging over the band's edge. On phones the three fan out under the text.
+- **Task cards** (home): white cards, a 52px line icon (`src/components/icons.ts`, Lucide style, 2px strokes) on a tile tinted with the card's section colour; the tile fills with the section colour on hover; the whole card is the link. On phones: two-column compact tiles, icon and label only.
+- **Page head** (`src/components/PageHead.astro`): the h1 and lead on a band in the section colour, with that page's print (`photos.ts` maps paths to photos) hanging over the band's lower edge on the right. On phones the print sits under the text, smaller, tucked right. Pages without a photo get the band alone.
+- **Sign-in pages**: the form beside a tilted print (layout only, set in `Base.astro`; hidden under 860px).
 - **Calendar**: planner grid: 3px top rule, condensed weekday heads, big day numbers, event chips with a dot (purple = calendar event, green = approved booking), purple tint for today. Under 640px only the agenda shows.
 - **Club cards**: white, 1px border, whole card clickable, purple border on hover; campus and category badges.
 - **Buttons and inputs**: 44px minimum height; 1.5px `--n4` input border; 3px purple focus ring.
 
 ## Photos
 
-Self-hosted WebP copies of Schulich School of Medicine & Dentistry photos in `public/photos/`, used with Noor's OK (2026-11-06); the footer credits Schulich and `photos.ts` records each source. To change a photo, replace the file and its entry in `photos.ts`.
+Self-hosted WebP copies of Schulich School of Medicine & Dentistry photos in `public/photos/`, used with Noor's OK (2026-11-06); the footer credits Schulich and `photos.ts` records each source. Natural colour, never tinted. To change a photo, replace the file and its entry in `photos.ts`.
 
 ## Motion
 
-Short ease-out transitions only (card lift on hover, thumb tab slide, menu chevron). All of it is turned off under `prefers-reduced-motion`.
+Short ease-out transitions only (card lift on hover, icon tile fill, prints straightening on hover, thumb tab slide, menu chevron). All of it is turned off under `prefers-reduced-motion`.

@@ -1,0 +1,15 @@
+---
+/** A photo as a real print: white border, optional tape, set at a slight angle. */
+import { href } from '../lib/paths';
+import type { Photo } from './photos';
+
+interface Props { photo: Photo; class?: string; tape?: boolean; eager?: boolean; decorative?: boolean }
+const { photo, class: extra, tape = false, eager = false, decorative = true } = Astro.props;
+---
+<figure class:list={['print', extra]}>
+  {tape && <span class="tape" aria-hidden="true"></span>}
+  <img src={href(photo.file)} srcset={photo.small ? `${href(photo.small)} 800w, ${href(photo.file)} ${photo.width}w` : undefined}
+    sizes="(max-width: 760px) 90vw, 420px" width={photo.width} height={photo.height} alt={decorative ? '' : photo.alt}
+    style={photo.position ? `object-position: ${photo.position}` : undefined}
+    loading={eager ? 'eager' : 'lazy'} fetchpriority={eager ? 'high' : undefined} decoding="async" />
+</figure>

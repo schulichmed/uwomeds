@@ -3,7 +3,8 @@ import Base from '../layouts/Base.astro';
 import EventsCalendar from '../components/EventsCalendar.astro';
 import { href } from '../lib/paths';
 import { PHOTOS } from '../components/photos';
-const hero = PHOTOS.benchGroup;
+import { icon } from '../components/icons';
+import Print from '../components/Print.astro';
 ---
 <Base title="Home">
   <section class="cover" slot="full-bleed" aria-labelledby="hero-h">
@@ -12,35 +13,42 @@ const hero = PHOTOS.benchGroup;
         <h1 id="hero-h">Schulich Meds</h1>
         <p class="cover-lead">Your council, your clubs and room booking in one place. Run by students, behind your Western email.</p>
       </div>
-      <figure class="cover-photo">
-        <img src={href(hero.file)} srcset={`${href(hero.small!)} 800w, ${href(hero.file)} ${hero.width}w`} sizes="(max-width: 860px) 100vw, 640px"
-          width={hero.width} height={hero.height} alt={hero.alt} fetchpriority="high" />
-      </figure>
+      <div class="cover-prints">
+        <Print photo={PHOTOS.benchGroup} class="print-a" tape eager />
+        <Print photo={PHOTOS.whiteCoats} class="print-b" eager />
+        <Print photo={PHOTOS.hallway} class="print-c" eager />
+      </div>
     </div>
   </section>
 
   <ul class="tasks" aria-label="Start here">
     <li class="task" data-section="involvement">
+      <span class="task-icon" set:html={icon('users', 26)} />
       <h2><a href={href('/clubs/')}>Club directory</a></h2>
       <p>Every club on both campuses. Club execs keep their own page up to date.</p>
     </li>
     <li class="task" data-section="involvement">
+      <span class="task-icon" set:html={icon('door', 26)} />
       <h2><a href={href('/room-booking/')}>Event &amp; room booking</a></h2>
       <p>Sign in with your Western email and request a room. Approved bookings go on the events calendar automatically.</p>
     </li>
     <li class="task" data-section="medfriend">
+      <span class="task-icon" set:html={icon('book', 26)} />
       <h2><a href={href('/medfriend/')}>MedFriend</a></h2>
       <p>Preclerkship notes, questions and Anki decks, for Western students.</p>
     </li>
     <li class="task" data-section="involvement">
+      <span class="task-icon" set:html={icon('calendar', 26)} />
       <h2><a href={href('/calendar/')}>Events calendar</a></h2>
       <p>Council and club events for London and Windsor.</p>
     </li>
     <li class="task" data-section="council">
+      <span class="task-icon" set:html={icon('landmark', 26)} />
       <h2><a href={href('/council/')}>Your council</a></h2>
       <p>Who's on council and how it's organised.</p>
     </li>
     <li class="task" data-section="resources">
+      <span class="task-icon" set:html={icon('heartPulse', 26)} />
       <h2><a href={href('/wellness/')}>Wellness</a></h2>
       <p>Supports and wellness events.</p>
     </li>

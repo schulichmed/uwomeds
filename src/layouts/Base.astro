@@ -4,7 +4,8 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import { href } from '../lib/paths';
 import { SECTIONS, sectionFor } from '../components/sections';
-import { PHOTOS, photoFor } from '../components/photos';
+import { PHOTOS } from '../components/photos';
+import Print from '../components/Print.astro';
 // Archivo (variable weight and width), self-hosted so pages make no external requests.
 import '@fontsource-variable/archivo/wdth.css';
 import '../styles/global.css';
@@ -12,7 +13,6 @@ import '../styles/global.css';
 interface Props { title: string; description?: string }
 const { title, description = 'Schulich Hippocratic Council: council, clubs, room booking and resources for Schulich medical students.' } = Astro.props;
 const section = sectionFor(Astro.url.pathname);
-const photo = photoFor(Astro.url.pathname);
 // Sign-in pages sit beside a photo (layout only, so the sign-in pages themselves stay as on build).
 const authPhoto = /^\/login\//.test(Astro.url.pathname.replace(import.meta.env.BASE_URL.replace(/\/$/, ''), '')) ? PHOTOS.picnicTable : undefined;
 const fullTitle = title === 'Home' ? 'Hippocratic Council (demo)' : `${title} | Hippocratic Council (demo)`;
@@ -40,24 +40,13 @@ const fullTitle = title === 'Home' ? 'Hippocratic Council (demo)' : `${title} | 
     )}
     <main id="main" tabindex="-1">
       <slot name="full-bleed" />
-      {photo && (
-        <div class="wrap">
-          <figure class="page-photo">
-            <img src={href(photo.file)} srcset={photo.small ? `${href(photo.small)} 800w, ${href(photo.file)} ${photo.width}w` : undefined}
-              sizes="(max-width: 1120px) 100vw, 1072px" width={photo.width} height={photo.height} alt=""
-              style={photo.position ? `object-position: ${photo.position}` : undefined} decoding="async" fetchpriority="high" />
-          </figure>
-        </div>
-      )}
       <div class:list={['wrap', { 'auth-split': authPhoto }]}>
         <div class="page-body">
           <div id="flash" class="flash" role="status" hidden></div>
           <slot />
         </div>
         {authPhoto && (
-          <figure class="auth-photo">
-            <img src={href(authPhoto.file)} width={authPhoto.width} height={authPhoto.height} alt="" decoding="async" />
-          </figure>
+          <div class="auth-photo"><Print photo={authPhoto} tape eager /></div>
         )}
       </div>
     </main>

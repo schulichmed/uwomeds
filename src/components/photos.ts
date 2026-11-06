@@ -20,7 +20,7 @@ export const PHOTOS = {
   hallway: P({ file: '/photos/hallway.webp', width: 880, height: 300, alt: 'Three Schulich students walking down a bright hallway on the Windsor campus', source: 'https://www.schulich.uwo.ca/gastroenterology/images/2024_WindsorCampus_BrandedLifestyle25-1.png', position: '45% 50%' }),
 } as const;
 
-/** One banner photo per page, chosen by site path (without the base). Pages not listed get none. */
+/** One print per section page head, chosen by site path (without the base). Pages not listed get none. */
 const BY_PATH: Record<string, Photo> = {
   '/council/': PHOTOS.whiteCoats,
   '/documents/': PHOTOS.medicalSciences,

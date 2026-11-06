@@ -1,10 +1,10 @@
 ---
+import PageHead from '../components/PageHead.astro';
 import Base from '../layouts/Base.astro';
 import { QUICK_LINKS } from '../data/links';
 ---
 <Base title="Links">
-  <h1>Links</h1>
-  <p class="lead">The sites Schulich medical students use every day. The header's Links menu goes straight to them.</p>
+  <PageHead title="Links" lead="The sites Schulich medical students use every day. The header's Links menu goes straight to them." />
   <ul class="doc-list">
     {QUICK_LINKS.map((l) => <li id={l.id}><a href={l.url} rel="noopener"><strong>{l.label}</strong></a><br /><span class="muted">{l.what}</span></li>)}
   </ul>

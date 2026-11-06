@@ -1,11 +1,11 @@
 ---
+import PageHead from '../components/PageHead.astro';
 import Base from '../layouts/Base.astro';
 import { DOCUMENTS } from '../data/pages';
 import { href } from '../lib/paths';
 ---
 <Base title="Documents">
-  <h1>Documents</h1>
-  <p class="lead">Here you can find important documents regarding the Hippocratic Council.</p>
+  <PageHead title="Documents" lead="Here you can find important documents regarding the Hippocratic Council." />
   <p class="notice">Looking for room booking? Go to <a href={href('/room-booking/')}>Event &amp; room booking</a>.</p>
   <ul class="doc-list">
     {DOCUMENTS.map((d) => <li><a href={d.url} rel="noopener">{d.title}</a></li>)}
