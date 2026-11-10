@@ -59,6 +59,26 @@ jobs:
         if: env.READY == 'true'
         run: pnpm build
 
+      # MedFriend becomes part of the site (plan Task 25). A read-only copy of the public
+      # repo, without the Anki decks (over Pages' 25 MiB limit; they stay on GitHub Pages
+      # until the R2 bucket exists) or the authoring tools. The repo itself isn't changed.
+      - name: Check out MedFriend
+        if: env.READY == 'true'
+        uses: actions/checkout@v7.0.1
+        with:
+          repository: ${{ vars.MEDFRIEND_REPO || 'schulichmed/preclerkship' }}
+          path: medfriend-src
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !*.apkg
+            !/tools/
+
+      - name: Copy MedFriend into the site
+        if: env.READY == 'true'
+        run: node scripts/prepare-medfriend.mjs medfriend-src dist/medfriend
+
       - name: Sync runtime secrets to Pages
         if: env.READY == 'true'
         env:

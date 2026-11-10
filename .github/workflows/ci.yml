@@ -28,6 +28,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm build # astro check + astro build
+      - name: Copy the fake MedFriend into the site (the real one is copied at deploy)
+        run: node scripts/prepare-medfriend.mjs tests/fixtures/medfriend-fake dist/medfriend
       - run: pnpm test
       - run: pnpm exec supabase start
       - run: pnpm db:test

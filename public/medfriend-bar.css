@@ -1,0 +1,18 @@
+/* The uwomeds.com bar added to the top of every MedFriend page (scripts/prepare-medfriend.mjs). */
+.uwomeds-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+  padding: 8px 16px;
+  background: #fff;
+  border-bottom: 3px solid #582c83;
+  font: 500 15px/1.3 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  position: relative;
+  z-index: 1000;
+}
+.uwomeds-bar-home img { display: block; height: 32px; width: auto; }
+.uwomeds-bar ul { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0; padding: 0; list-style: none; }
+.uwomeds-bar a { color: #2b2135; text-decoration: none; }
+.uwomeds-bar a:hover, .uwomeds-bar a:focus-visible { color: #582c83; text-decoration: underline; }
+.uwomeds-bar a[aria-current='page'] { color: #582c83; font-weight: 700; }

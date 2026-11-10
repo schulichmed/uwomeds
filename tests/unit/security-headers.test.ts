@@ -1,11 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import { MEDFRIEND_HEADERS, parseHeadersFile, SITE_HEADERS, toHeadersFile } from '../../src/lib/security-headers';
+import { MEDFRIEND_HEADERS, parseHeadersFile, SITE_HEADERS, siteHeadersFile, toHeadersFile } from '../../src/lib/security-headers';
 
 const directive = (csp: string, name: string) => csp.split(';').map((d) => d.trim()).find((d) => d.startsWith(`${name} `)) ?? '';
 
 describe('security headers', () => {
   it('the _headers file reads back to exactly SITE_HEADERS', () => {
     expect(parseHeadersFile(toHeadersFile({ '/*': SITE_HEADERS }))).toEqual({ '/*': SITE_HEADERS });
+  });
+
+  it('the site file sets the MedFriend policy under /medfriend/ and detaches the council one', () => {
+    const text = siteHeadersFile();
+    const rules = parseHeadersFile(text);
+    expect(rules['/*']).toEqual(SITE_HEADERS);
+    expect(rules['/medfriend/*']['Content-Security-Policy']).toBe(MEDFRIEND_HEADERS['Content-Security-Policy']);
+    expect(rules['/medfriend/*']['X-Frame-Options']).toBe('SAMEORIGIN');
+    expect(text).toContain('  ! Content-Security-Policy');
+    expect(text).toContain('  ! X-Frame-Options');
   });
 
   it('the council site allows no inline scripts and no framing', () => {

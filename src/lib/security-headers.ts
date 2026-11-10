@@ -22,9 +22,7 @@ const SITE_CSP = [
   "font-src 'self'",
   "connect-src 'self' https://*.supabase.co",
   // Turnstile (Task 13), Instagram (Task 5), Google Calendar and Sheets embeds (Task 15).
-  // schulichmed.github.io: the demo's MedFriend embed, removed when Task 25 serves
-  // MedFriend from the site itself.
-  'frame-src https://challenges.cloudflare.com https://www.instagram.com https://calendar.google.com https://docs.google.com https://schulichmed.github.io',
+  'frame-src https://challenges.cloudflare.com https://www.instagram.com https://calendar.google.com https://docs.google.com',
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
@@ -68,7 +66,22 @@ export function toHeadersFile(rules: Record<string, Record<string, string>>): st
     .concat('\n');
 }
 
-/** Read a `_headers` file back into rules (used by the tests). */
+/**
+ * The whole `_headers` file: the council site's headers everywhere, and MedFriend's looser
+ * ones under /medfriend/. Cloudflare joins a header set by two matching rules with a comma,
+ * so the MedFriend rule first detaches (`! Name`) the two it replaces.
+ */
+export function siteHeadersFile(): string {
+  const replaced = Object.keys(MEDFRIEND_HEADERS).filter((k) => SITE_HEADERS[k] !== MEDFRIEND_HEADERS[k]);
+  const medfriend = [
+    '/medfriend/*',
+    ...replaced.map((k) => `  ! ${k}`),
+    ...replaced.map((k) => `  ${k}: ${MEDFRIEND_HEADERS[k]}`),
+  ].join('\n');
+  return `${toHeadersFile({ '/*': SITE_HEADERS }).trimEnd()}\n\n${medfriend}\n`;
+}
+
+/** Read a `_headers` file back into rules (used by the tests). Detach lines are skipped. */
 export function parseHeadersFile(text: string): Record<string, Record<string, string>> {
   const rules: Record<string, Record<string, string>> = {};
   let current: Record<string, string> | null = null;
@@ -76,7 +89,7 @@ export function parseHeadersFile(text: string): Record<string, Record<string, st
     if (!line.trim()) continue;
     if (!/^\s/.test(line)) {
       current = rules[line.trim()] = {};
-    } else if (current) {
+    } else if (current && !line.trim().startsWith('!')) {
       const i = line.indexOf(':');
       current[line.slice(0, i).trim()] = line.slice(i + 1).trim();
     }

@@ -2,7 +2,7 @@
 import cloudflare from '@astrojs/cloudflare';
 import { writeFileSync } from 'node:fs';
 import { defineConfig } from 'astro/config';
-import { SITE_HEADERS, toHeadersFile } from './src/lib/security-headers.ts';
+import { siteHeadersFile } from './src/lib/security-headers.ts';
 
 /** Writes dist/_headers so Cloudflare Pages sends the security headers with static pages
  *  (server-rendered pages get the same ones from src/middleware.ts). */
@@ -11,7 +11,7 @@ const securityHeaders = {
   hooks: {
     /** @param {{ dir: URL }} opts */
     'astro:build:done': ({ dir }) => {
-      writeFileSync(new URL('_headers', dir), toHeadersFile({ '/*': SITE_HEADERS }));
+      writeFileSync(new URL('_headers', dir), siteHeadersFile());
     },
   },
 };
