@@ -20,7 +20,8 @@ test('MedFriend pages carry the site bar and run under their own policy', async 
   await expect(page.getByRole('navigation', { name: 'uwomeds.com' })).toBeVisible();
   await expect(page.locator('#inline-check')).toHaveText('inline script ran');
   await page.getByRole('link', { name: 'FoM block 1' }).click();
-  await expect(page).toHaveURL(/\/medfriend\/fom\/b1\.html$/);
+  // Cloudflare Pages serves b1.html at /fom/b1; MedFriend's relative links still resolve.
+  await expect(page).toHaveURL(/\/medfriend\/fom\/b1(\.html)?$/);
   await page.getByRole('link', { name: 'MedFriend home' }).click();
   await expect(page).toHaveURL(/\/medfriend\/$/);
   expect(violations).toEqual([]);
