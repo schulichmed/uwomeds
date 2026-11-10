@@ -1,0 +1,26 @@
+# Refreshes MedFriend on both beta sites every night, so changes pushed to
+# schulichmed/preclerkship appear without anyone touching this repo (plan Task 25).
+# For a refresh now: Actions > Deploy > Run workflow, branch build (or redesign).
+# Lives on `main` because GitHub only runs schedules from the default branch.
+name: Refresh MedFriend nightly
+
+on:
+  schedule:
+    - cron: '0 8 * * *' # 3 or 4 a.m. in London, Ontario
+  workflow_dispatch:
+
+permissions:
+  actions: write
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Start the deploy on build and redesign
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for branch in build redesign; do
+            gh workflow run deploy.yml --ref "$branch" -R "$GITHUB_REPOSITORY" \
+              || echo "::warning::Could not start the deploy on $branch"
+          done
