@@ -67,6 +67,8 @@ test('notice once', async ({ browser }) => {
 
   const second = await browser.newContext();
   const page = await second.newPage();
+  // Supabase sends one code per address every 5 seconds (supabase/config.toml).
+  await page.waitForTimeout(6000);
   const before = await mailCount(email);
   await requestCode(page, email);
   await finishSignIn(page, email, before);
