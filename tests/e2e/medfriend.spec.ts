@@ -3,7 +3,7 @@
  *  The signed-in tests need the local Supabase stack. */
 import { existsSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
-import { finishSignIn, fresh, mailCount, requestCode, signInThrough } from './helpers';
+import { fresh, signInThrough } from './helpers';
 
 test.skip(!existsSync('dist/medfriend/index.html'), 'run scripts/prepare-medfriend.mjs first');
 
@@ -45,25 +45,6 @@ for (const domain of ['meds.uwo.ca', 'uwo.ca']) {
     expect((await page.request.get('/medfriend/fom/anki/nope.apkg', { maxRedirects: 0 })).status()).toBe(404);
   });
 }
-
-test('notice once', async ({ browser }) => {
-  const email = fresh();
-  const first = await browser.newContext();
-  await signInThrough(await first.newPage(), '/medfriend/', email);
-  await first.close();
-
-  const second = await browser.newContext();
-  const page = await second.newPage();
-  // Supabase sends one code per address every 5 seconds (supabase/config.toml).
-  await page.waitForTimeout(6000);
-  const before = await mailCount(email);
-  await requestCode(page, email);
-  await finishSignIn(page, email, before);
-  await page.goto('/medfriend/');
-  await expect(page).toHaveURL(/\/medfriend\/$/);
-  await expect(page.locator('#mf-title')).toHaveText('Fake MedFriend hub');
-  await second.close();
-});
 
 test('medfriend policy', async ({ page }) => {
   const violations: string[] = [];

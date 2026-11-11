@@ -1,27 +1,30 @@
 /**
- * Sample council org chart (structure from the spec; names invented).
- * The real site builds this from `content_items` rows with collection = 'council'.
+ * The 2026-27 Hippocratic Council, in the order uwomeds.com/council/ lists them (November
+ * 2026), with Noor Simsam as IT Director. A plain list: no reporting lines, no org chart.
+ * The real site will build this from `content_items` rows with collection = 'council', so
+ * page editors keep it current.
  */
 export interface CouncilMember {
-  id: string;
   role: string;
   name: string;
-  group: 'president' | 'executive' | 'position';
-  reportsTo?: string;
 }
 
-export const SAMPLE_COUNCIL: CouncilMember[] = [
-  { id: 'president', role: 'President', name: 'Alex Placeholder', group: 'president' },
-  { id: 'past-president', role: 'Past President', name: 'Blake Sample', group: 'president' },
-  { id: 'vp-events', role: 'VP Events', name: 'Cameron Example', group: 'executive' },
-  { id: 'vp-finance', role: 'VP Finance', name: 'Dana Sample', group: 'executive' },
-  { id: 'vp-edid', role: 'VP EDI-D', name: 'Eden Placeholder', group: 'executive' },
-  { id: 'vp-academic', role: 'VP Academic', name: 'Finley Example', group: 'executive' },
-  { id: 'vp-windsor', role: 'VP Windsor', name: 'Gray Sample', group: 'executive' },
-  { id: 'vp-internal', role: 'VP Internal', name: 'Harper Placeholder', group: 'executive' },
-  { id: 'vp-external', role: 'VP External', name: 'Indigo Example', group: 'executive' },
-  { id: 'vp-communications', role: 'VP Communications', name: 'Jules Sample', group: 'executive' },
-  { id: 'it-director', role: 'IT Director', name: 'Kai Placeholder', group: 'position', reportsTo: 'vp-communications' },
-  { id: 'social-media-director', role: 'Social Media Director', name: 'Lane Example', group: 'position', reportsTo: 'vp-communications' },
-  { id: 'community-relations', role: 'Community Relations Director', name: 'Marlow Sample', group: 'position' },
+export const COUNCIL: CouncilMember[] = [
+  { role: 'President', name: 'Hashim Al-Bya' },
+  { role: 'VP Windsor', name: 'Deyaa Almasri' },
+  { role: 'VP Internal', name: 'Saahil Bhalla' },
+  { role: 'VP External Senior', name: 'Jennifer Tran' },
+  { role: 'VP External Junior', name: 'Agam Chauhan' },
+  { role: 'VP Communications', name: 'Pratham Gupta' },
+  { role: 'VP Finance', name: 'Jessica Wang' },
+  { role: 'VP Academic', name: 'David Sebben' },
+  { role: 'VP Events', name: 'Angela Liu' },
+  { role: 'VP EDI', name: 'Aarashprit Sidhu' },
+  { role: 'VP EDI', name: 'Maya Nagorski' },
+  { role: 'Athletics Director', name: 'Kristian Isa' },
+  { role: 'USC Representative', name: 'Panav Sharma' },
+  { role: 'USC Representative', name: 'Jazlyn Garcha' },
+  { role: 'Global Health Liaison', name: 'Nour Risha' },
+  { role: 'IT Director', name: 'Noor Simsam' },
+  { role: 'Social Media Director', name: 'To be announced' },
 ];

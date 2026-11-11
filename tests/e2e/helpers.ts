@@ -54,7 +54,7 @@ export async function finishSignIn(page: Page, email: string, before = 0): Promi
   await enterCode(page, (await latestMail(email)).code);
 }
 
-/** Open a MedFriend page signed out, sign in from there, and pass the first-visit notice. */
+/** Open a MedFriend page signed out and sign in from there. */
 export async function signInThrough(page: Page, path: string, email: string): Promise<void> {
   await page.goto(path);
   // The MedFriend root shows the landing page instead of redirecting.
@@ -63,6 +63,4 @@ export async function signInThrough(page: Page, path: string, email: string): Pr
   const before = await mailCount(email);
   await submitEmail(page, email);
   await finishSignIn(page, email, before);
-  await expect(page).toHaveURL(/\/medfriend-notice\/\?next=/);
-  await page.getByRole('button', { name: 'I understand' }).click();
 }

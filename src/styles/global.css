@@ -405,11 +405,7 @@ main:has(.page-head) { border-top: 0; }
 .org { list-style: none; padding: 0; margin: 0; }
 .org-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; list-style: none; padding: 0; margin: 0 0 14px; }
 .person { border: 1px solid var(--n3); border-radius: 12px; padding: 14px 16px; background: #fff; max-width: none; }
-.person.top { border-color: var(--purple); background: var(--purple); color: var(--on-purple-soft); }
-.person.top .role { color: #fff; }
 .person .role { display: block; font-weight: 700; color: var(--heading); }
-.reports { list-style: none; margin: 10px 0 0; padding: 8px 0 0; border-top: 1px solid var(--n2); }
-.reports li { margin: 8px 0; font-size: 0.95rem; }
 
 /* Page editing */
 .page-tools { margin: 0.5rem 0 1.2rem; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }

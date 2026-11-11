@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { gateDecision, isPagePath, type GateInput } from '../../src/lib/medfriend';
+import { gateDecision, type GateInput } from '../../src/lib/medfriend';
 
-const student = { user: { email: 'student1@meds.uwo.ca' }, role: 'student', noticeSeen: true };
+const student = { user: { email: 'student1@meds.uwo.ca' }, role: 'student' };
 const at = (path: string, who: Omit<GateInput, 'path'>) => gateDecision({ path, ...who });
-const out = { user: null, role: null, noticeSeen: false };
+const out = { user: null, role: null };
 
 describe('gateDecision', () => {
   it('shows signed-out visitors the landing page at the MedFriend root', () => {
@@ -32,27 +32,15 @@ describe('gateDecision', () => {
     expect(at('/medfriend/fom/questions.json', { ...student, role: null })).toBe('login');
   });
 
-  it('shows a first-time reader the notice on pages only', () => {
-    const fresh = { ...student, noticeSeen: false };
-    expect(at('/medfriend/', fresh)).toBe('notice');
-    expect(at('/medfriend/fom/b1', fresh)).toBe('notice');
-    expect(at('/medfriend/fom/b1.html', fresh)).toBe('notice');
-    expect(at('/medfriend/fom/questions.json', fresh)).toBe('asset');
-    expect(at('/medfriend/base.css', fresh)).toBe('asset');
+  it('takes a signed-in reader straight to pages (the terms of use cover MedFriend)', () => {
+    expect(at('/medfriend/', student)).toBe('asset');
+    expect(at('/medfriend/fom/b1', student)).toBe('asset');
+    expect(at('/medfriend/fom/b1.html', student)).toBe('asset');
   });
 
   it('refuses paths outside MedFriend or with dot segments', () => {
     expect(at('/medfriendly/', student)).toBe('not_found');
     expect(at('/medfriend/../admin/', student)).toBe('not_found');
     expect(at('/medfriend/fom%2f..%2fx', student)).toBe('not_found');
-  });
-});
-
-describe('isPagePath', () => {
-  it('tells pages from files', () => {
-    expect(isPagePath('/medfriend/')).toBe(true);
-    expect(isPagePath('/medfriend/fom/b1')).toBe(true);
-    expect(isPagePath('/medfriend/fom/b1.html')).toBe(true);
-    expect(isPagePath('/medfriend/fom/q.json')).toBe(false);
   });
 });

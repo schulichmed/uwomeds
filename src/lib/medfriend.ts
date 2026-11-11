@@ -7,7 +7,7 @@
 import { createServerClient as createSsrClient, parseCookieHeader, serializeCookieHeader } from '@supabase/ssr';
 import { MEDFRIEND_HEADERS, SITE_HEADERS } from './security-headers';
 
-export type GateDecision = 'landing' | 'login' | 'notice' | 'asset' | 'deck' | 'not_found';
+export type GateDecision = 'landing' | 'login' | 'asset' | 'deck' | 'not_found';
 
 export interface GateInput {
   /** URL pathname, e.g. /medfriend/fom/b1 */
@@ -16,27 +16,18 @@ export interface GateInput {
   user: { email: string } | null;
   /** The profile's role; null when the profile is blocked or missing. */
   role: string | null;
-  /** True once the reader has pressed "I understand" on the MedFriend notice. */
-  noticeSeen: boolean;
 }
 
 const ROOT = /^\/medfriend\/?$/;
 const isDeck = (path: string) => /\.apkg$/i.test(path) || /\/source\.zip$/i.test(path);
 
-/** A page (as opposed to a file a page loads): no extension, a trailing slash, or .html. */
-export function isPagePath(path: string): boolean {
-  const last = path.split('/').pop() ?? '';
-  return last === '' || last.endsWith('.html') || !last.includes('.');
-}
-
-export function gateDecision({ path, user, role, noticeSeen }: GateInput): GateDecision {
+export function gateDecision({ path, user, role }: GateInput): GateDecision {
   if (!ROOT.test(path) && !path.startsWith('/medfriend/')) return 'not_found';
   // Encoded slashes or dot segments never name a real MedFriend file.
   if (/%2f|%5c|(^|\/)\.\.?(\/|$)/i.test(path)) return 'not_found';
   if (!user) return ROOT.test(path) ? 'landing' : 'login';
   if (!role) return 'login';
   if (isDeck(path)) return 'deck';
-  if (!noticeSeen && isPagePath(path)) return 'notice';
   return 'asset';
 }
 
@@ -53,13 +44,12 @@ interface Env {
 interface Reader {
   user: { id: string; email: string } | null;
   role: string | null;
-  noticeSeen: boolean;
   cookies: string[];
 }
 
 /** Who is asking, from the Supabase session cookie. Any failure counts as signed out. */
 async function readSession(request: Request, env: Env): Promise<Reader> {
-  const reader: Reader = { user: null, role: null, noticeSeen: false, cookies: [] };
+  const reader: Reader = { user: null, role: null, cookies: [] };
   if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) return reader;
   const secure = new URL(request.url).protocol === 'https:';
   try {
@@ -80,15 +70,14 @@ async function readSession(request: Request, env: Env): Promise<Reader> {
     if (!data.user?.email) return reader;
     const { data: profile, error } = await supabase
       .from('profiles')
-      .select('role, blocked, medfriend_notice_at')
+      .select('role, blocked')
       .eq('id', data.user.id)
       .maybeSingle();
     if (error || !profile) return reader;
     reader.user = { id: data.user.id, email: data.user.email };
     reader.role = profile.blocked ? null : (profile.role as string);
-    reader.noticeSeen = !!profile.medfriend_notice_at;
   } catch {
-    return { user: null, role: null, noticeSeen: false, cookies: [] };
+    return { user: null, role: null, cookies: [] };
   }
   return reader;
 }
@@ -111,7 +100,7 @@ export async function gateMedfriend(request: Request, env: Env): Promise<Respons
   const url = new URL(request.url);
   const path = url.pathname;
   const reader = await readSession(request, env);
-  const decision = gateDecision({ path, user: reader.user, role: reader.role, noticeSeen: reader.noticeSeen });
+  const decision = gateDecision({ path, user: reader.user, role: reader.role });
   const here = `${path}${url.search}`;
 
   switch (decision) {
@@ -121,8 +110,6 @@ export async function gateMedfriend(request: Request, env: Env): Promise<Respons
     }
     case 'login':
       return redirect(`/login/?next=${encodeURIComponent(here)}`, reader.cookies);
-    case 'notice':
-      return redirect(`/medfriend-notice/?next=${encodeURIComponent(here)}`, reader.cookies);
     case 'deck': {
       // Decks move to the R2 bucket in Task 0B; until then they stay on GitHub Pages.
       const key = decodeURIComponent(path.slice('/medfriend/'.length));

@@ -1,42 +1,12 @@
 ---
 import PageHead from '../components/PageHead.astro';
 import Base from '../layouts/Base.astro';
-import { SAMPLE_COUNCIL } from '../data/council';
-
-const presidents = SAMPLE_COUNCIL.filter((m) => m.group === 'president');
-const vps = SAMPLE_COUNCIL.filter((m) => m.group === 'executive');
-const reportsTo = (id: string) => SAMPLE_COUNCIL.filter((m) => m.reportsTo === id);
-const others = SAMPLE_COUNCIL.filter((m) => m.group === 'position' && !m.reportsTo);
+import { COUNCIL } from '../data/council';
 ---
 <Base title="Council members">
-  <PageHead title="Council members" lead="How the Hippocratic Council is organised. Built from council entries, so it stays current when page editors update them." />
-  <p class="demo-note">Demo: every name below is a sample.</p>
+  <PageHead title="Council members" lead="Meet the members of the Hippocratic Council." />
 
-  <h2>Presidents</h2>
   <ul class="org-row">
-    {presidents.map((m) => <li class="person top"><span class="role">{m.role}</span>{m.name}</li>)}
+    {COUNCIL.map((m) => <li class="person"><span class="role">{m.role}</span>{m.name}</li>)}
   </ul>
-
-  <h2>Vice-presidents</h2>
-  <ul class="org-row">
-    {vps.map((m) => (
-      <li class="person">
-        <span class="role">{m.role}</span>{m.name}
-        {reportsTo(m.id).length > 0 && (
-          <ul class="reports" aria-label={`Reports to ${m.role}`}>
-            {reportsTo(m.id).map((r) => <li><span class="role">{r.role}</span>{r.name}</li>)}
-          </ul>
-        )}
-      </li>
-    ))}
-  </ul>
-
-  {others.length > 0 && (
-    <>
-      <h2>Other positions</h2>
-      <ul class="org-row">
-        {others.map((m) => <li class="person"><span class="role">{m.role}</span>{m.name}</li>)}
-      </ul>
-    </>
-  )}
 </Base>
