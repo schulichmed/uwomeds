@@ -1,6 +1,6 @@
 /**
- * The 2026-27 Hippocratic Council, in the order uwomeds.com/council/ lists them (November
- * 2026), with Noor Simsam as IT Director. A plain list: no reporting lines, no org chart.
+ * The 2026-27 Hippocratic Council, from uwomeds.com/council/ (November 2026), with
+ * Noor Simsam as IT Director, placed next to VP EDI (Noor's call). A plain list: no reporting lines, no org chart.
  * The real site will build this from `content_items` rows with collection = 'council', so
  * page editors keep it current.
  */
@@ -21,10 +21,10 @@ export const COUNCIL: CouncilMember[] = [
   { role: 'VP Events', name: 'Angela Liu' },
   { role: 'VP EDI', name: 'Aarashprit Sidhu' },
   { role: 'VP EDI', name: 'Maya Nagorski' },
+  { role: 'IT Director', name: 'Noor Simsam' },
   { role: 'Athletics Director', name: 'Kristian Isa' },
   { role: 'USC Representative', name: 'Panav Sharma' },
   { role: 'USC Representative', name: 'Jazlyn Garcha' },
   { role: 'Global Health Liaison', name: 'Nour Risha' },
-  { role: 'IT Director', name: 'Noor Simsam' },
   { role: 'Social Media Director', name: 'To be announced' },
 ];
