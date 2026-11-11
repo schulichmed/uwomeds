@@ -13,8 +13,17 @@ const params = Astro.url.searchParams;
 const campusParam = params.get('campus');
 const campus: Campus | undefined = campusParam === 'london' || campusParam === 'windsor' ? campusParam : undefined;
 const q = (params.get('q') ?? '').slice(0, 100);
-const clubs = await listClubs(createServerClient(Astro), { campus, q });
-setClubPageCache(Astro.response.headers, !!Astro.locals.user);
+let clubs: Awaited<ReturnType<typeof listClubs>> = [];
+let failed = false;
+try {
+  clubs = await listClubs(createServerClient(Astro), { campus, q });
+} catch (err) {
+  console.error(err);
+  failed = true;
+  Astro.response.status = 503;
+}
+if (failed) Astro.response.headers.set('Cache-Control', 'no-store');
+else setClubPageCache(Astro.response.headers, !!Astro.locals.user);
 ---
 <Base title="Club directory">
   <h1>Club directory</h1>
@@ -42,6 +51,7 @@ setClubPageCache(Astro.response.headers, !!Astro.locals.user);
     </div>
     <noscript><button class="button" type="submit">Search</button></noscript>
   </form>
+  {failed && <p class="error" role="alert">The club list couldn't load just now. Please try again in a minute.</p>}
   <p id="club-count" class="muted" aria-live="polite">{clubs.length === 1 ? '1 club' : `${clubs.length} clubs`}</p>
   <ul id="club-list" class="club-list">
     <Fragment set:html={clubs.map(clubCardHtml).join('')} />
