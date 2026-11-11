@@ -1,23 +1,35 @@
 ---
+// The club directory (plan Task 5), from the clubs database. ?campus= and ?q= filter on
+// the server, so links and no-JS visitors work; the script filters as you type.
+export const prerender = false;
 import Base from '../../layouts/Base.astro';
-import { CLUBS } from '../../data/clubs';
 import { clubCardHtml } from '../../lib/render-club';
+import { listClubs, setClubPageCache } from '../../lib/clubs';
+import { createServerClient } from '../../lib/supabase';
 import { CLUB_CATEGORIES } from '../../data/club-categories';
+import type { Campus } from '../../lib/types';
+
+const params = Astro.url.searchParams;
+const campusParam = params.get('campus');
+const campus: Campus | undefined = campusParam === 'london' || campusParam === 'windsor' ? campusParam : undefined;
+const q = (params.get('q') ?? '').slice(0, 100);
+const clubs = await listClubs(createServerClient(Astro), { campus, q });
+setClubPageCache(Astro.response.headers, !!Astro.locals.user);
 ---
 <Base title="Club directory">
   <h1>Club directory</h1>
   <p class="lead">Clubs on the London and Windsor campuses. Each club's execs keep its page up to date.</p>
-  <form id="club-filters" class="club-filters" role="search">
+  <form id="club-filters" class="club-filters" role="search" method="get">
     <div class="field">
       <label for="club-search">Search clubs</label>
-      <input type="search" id="club-search" placeholder="e.g. surgery" autocomplete="off" />
+      <input type="search" id="club-search" name="q" value={q} placeholder="e.g. surgery" autocomplete="off" />
     </div>
     <fieldset>
       <legend>Campus</legend>
       <div class="choices">
-        <label><input type="radio" name="campus" value="" checked /> All</label>
-        <label><input type="radio" name="campus" value="london" /> London</label>
-        <label><input type="radio" name="campus" value="windsor" /> Windsor</label>
+        <label><input type="radio" name="campus" value="" checked={!campus} /> All</label>
+        <label><input type="radio" name="campus" value="london" checked={campus === 'london'} /> London</label>
+        <label><input type="radio" name="campus" value="windsor" checked={campus === 'windsor'} /> Windsor</label>
         <label><input type="radio" name="campus" value="none" /> Not listed</label>
       </div>
     </fieldset>
@@ -28,30 +40,30 @@ import { CLUB_CATEGORIES } from '../../data/club-categories';
         {CLUB_CATEGORIES.map((c) => <option value={c.id}>{c.label}</option>)}
       </select>
     </div>
+    <noscript><button class="button" type="submit">Search</button></noscript>
   </form>
-  <p id="club-count" class="muted" aria-live="polite">{CLUBS.length} clubs</p>
+  <p id="club-count" class="muted" aria-live="polite">{clubs.length === 1 ? '1 club' : `${clubs.length} clubs`}</p>
   <ul id="club-list" class="club-list">
-    <Fragment set:html={CLUBS.map(clubCardHtml).join('')} />
+    <Fragment set:html={clubs.map(clubCardHtml).join('')} />
   </ul>
 </Base>
 
 <script>
-  import { clubCardHtml } from '../../lib/render-club';
-  import { listClubs } from '../../lib/store';
-
   const list = document.getElementById('club-list') as HTMLUListElement;
   const search = document.getElementById('club-search') as HTMLInputElement;
   const count = document.getElementById('club-count') as HTMLElement;
   const category = document.getElementById('club-category') as HTMLSelectElement;
   document.getElementById('club-filters')?.addEventListener('submit', (ev) => ev.preventDefault());
-  list.innerHTML = listClubs().map(clubCardHtml).join('');
 
   function apply(): void {
     const q = search.value.trim().toLowerCase();
     const campus = (document.querySelector('input[name=campus]:checked') as HTMLInputElement | null)?.value ?? '';
     let shown = 0;
     list.querySelectorAll<HTMLLIElement>('.club-card').forEach((li) => {
-      const ok = (!q || (li.dataset.name ?? '').includes(q)) && (!category.value || (li.dataset.categories ?? '').split(' ').includes(category.value)) && (!campus || (campus === 'none' ? !li.dataset.campuses : (li.dataset.campuses ?? '').split(' ').includes(campus)));
+      const ok =
+        (!q || (li.dataset.name ?? '').includes(q)) &&
+        (!category.value || (li.dataset.categories ?? '').split(' ').includes(category.value)) &&
+        (!campus || (campus === 'none' ? !li.dataset.campuses : (li.dataset.campuses ?? '').split(' ').includes(campus)));
       li.hidden = !ok;
       if (ok) shown++;
     });

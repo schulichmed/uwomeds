@@ -46,6 +46,8 @@ test('no CSP violations', async ({ page }) => {
     await page.waitForLoadState('networkidle');
   }
   // A club page with an Instagram card, with "Show recent Instagram posts" clicked.
+  // Instagram itself is stubbed: the test is about this site's policy, not Instagram's page.
+  await page.route('https://www.instagram.com/**', (r) => r.fulfill({ contentType: 'text/html', body: '<p>stub</p>' }));
   await page.goto('/clubs/');
   const clubLinks = await page.locator('.club-card h2 a').evaluateAll((as) => as.map((a) => (a as HTMLAnchorElement).getAttribute('href')));
   for (const href of clubLinks) {
