@@ -12,6 +12,8 @@ const NO_STORE = 'private, no-store';
 /** Open a MedFriend page signed out, sign in from the redirect, and pass the notice. */
 async function signInThrough(page: Page, path: string, email: string): Promise<void> {
   await page.goto(path);
+  // The MedFriend root shows the landing page instead of redirecting.
+  if (/^\/medfriend\/?$/.test(path)) await page.getByRole('link', { name: 'Sign in with your Western email' }).click();
   await expect(page).toHaveURL(/\/login\/\?next=/);
   const before = await mailCount(email);
   await submitEmail(page, email);
