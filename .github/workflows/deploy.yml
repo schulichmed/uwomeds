@@ -52,8 +52,17 @@ jobs:
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
         run: |
-          pnpm exec supabase link --project-ref "$SUPABASE_PROJECT_REF" --password "$SUPABASE_DB_PASSWORD"
-          pnpm exec supabase db push --password "$SUPABASE_DB_PASSWORD"
+          # Not `supabase link`: it reads the project's API keys, secret key included, and the
+          # access token is deliberately not allowed to. The token only looks up the pooler
+          # address (Connection Pooling: Read); the password does the rest. Session mode
+          # (port 5432), because GitHub's runners have no IPv6 for the direct address.
+          pooler=$(curl -fsS -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN"             "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/config/database/pooler")
+          host=$(jq -r '[.[] | select(.database_type == "PRIMARY")][0].db_host // .[0].db_host' <<<"$pooler")
+          user=$(jq -r '[.[] | select(.database_type == "PRIMARY")][0].db_user // .[0].db_user' <<<"$pooler")
+          pass=$(jq -rn --arg p "$SUPABASE_DB_PASSWORD" '$p|@uri')
+          echo "::add-mask::$pass"
+          test -n "$host" && test "$host" != null
+          pnpm exec supabase db push --db-url "postgresql://$user:$pass@$host:5432/postgres"
 
       - name: Build
         if: env.READY == 'true'
