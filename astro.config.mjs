@@ -1,6 +1,6 @@
 // @ts-check
 import cloudflare from '@astrojs/cloudflare';
-import { writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { defineConfig } from 'astro/config';
 import { siteHeadersFile } from './src/lib/security-headers.ts';
 
@@ -12,6 +12,25 @@ const securityHeaders = {
     /** @param {{ dir: URL }} opts */
     'astro:build:done': ({ dir }) => {
       writeFileSync(new URL('_headers', dir), siteHeadersFile());
+    },
+  },
+};
+
+/** Once the adapter routes everything (`/*`) to the Function, the /medfriend rules below
+ *  overlap it, and Cloudflare refuses overlapping rules. Drop includes `/*` already covers.
+ *  Runs after the adapter has written dist/_routes.json. */
+const routesTidy = {
+  name: 'routes-tidy',
+  hooks: {
+    /** @param {{ dir: URL }} opts */
+    'astro:build:done': ({ dir }) => {
+      const file = new URL('_routes.json', dir);
+      if (!existsSync(file)) return;
+      const routes = JSON.parse(readFileSync(file, 'utf8'));
+      if (routes.include?.includes('/*')) {
+        routes.include = ['/*'];
+        writeFileSync(file, JSON.stringify(routes, null, 2));
+      }
     },
   },
 };
@@ -30,7 +49,7 @@ export default defineConfig({
   }),
   trailingSlash: 'always',
   build: { format: 'directory' },
-  integrations: [securityHeaders],
+  integrations: [securityHeaders, routesTidy],
   // Never inline small scripts into the HTML: the CSP allows only scripts from files.
   vite: { build: { assetsInlineLimit: 0 } },
 });
