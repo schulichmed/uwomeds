@@ -1,4 +1,5 @@
 ---
+import PageHead from '../components/PageHead.astro';
 import Base from '../layouts/Base.astro';
 import { SAMPLE_COUNCIL } from '../data/council';
 
@@ -8,8 +9,7 @@ const reportsTo = (id: string) => SAMPLE_COUNCIL.filter((m) => m.reportsTo === i
 const others = SAMPLE_COUNCIL.filter((m) => m.group === 'position' && !m.reportsTo);
 ---
 <Base title="Council members">
-  <h1>Council members</h1>
-  <p class="lead">How the Hippocratic Council is organised. Built from council entries, so it stays current when page editors update them.</p>
+  <PageHead title="Council members" lead="How the Hippocratic Council is organised. Built from council entries, so it stays current when page editors update them." />
   <p class="demo-note">Demo: every name below is a sample.</p>
 
   <h2>Presidents</h2>

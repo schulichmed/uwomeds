@@ -1,12 +1,12 @@
 ---
 import Base from '../../layouts/Base.astro';
+import PageHead from '../../components/PageHead.astro';
 import { CLUBS } from '../../data/clubs';
 import { clubCardHtml } from '../../lib/render-club';
 import { CLUB_CATEGORIES } from '../../data/club-categories';
 ---
 <Base title="Club directory">
-  <h1>Club directory</h1>
-  <p class="lead">Clubs on the London and Windsor campuses. Each club's execs keep its page up to date.</p>
+  <PageHead title="Club directory" lead="Clubs on the London and Windsor campuses. Each club's execs keep its page up to date." />
   <form id="club-filters" class="club-filters" role="search">
     <div class="field">
       <label for="club-search">Search clubs</label>

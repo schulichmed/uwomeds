@@ -1,4 +1,5 @@
 ---
+import PageHead from '../../components/PageHead.astro';
 import Base from '../../layouts/Base.astro';
 import PrivacyNotice from '../../components/PrivacyNotice.astro';
 import { WINDSOR_ROOMS } from '../../data/rooms';
@@ -6,8 +7,7 @@ import { BOOKING_RECIPIENTS } from '../../data/people';
 ---
 <Base title="Event & room booking">
   <div id="booking-root" hidden>
-    <h1>Event &amp; room booking</h1>
-    <p class="lead">Request a room for your event. Western's Facilities Assistance approves or declines it, and approved bookings go on the events calendar automatically.</p>
+    <PageHead title="Event & room booking" lead="Request a room for your event. Western's Facilities Assistance approves or declines it, and approved bookings go on the events calendar automatically." />
     <p>Requesting as <strong id="requester"></strong>.</p>
     <div id="form-errors" class="error-summary" role="alert" tabindex="-1" hidden></div>
     <form id="booking-form" class="stack" novalidate>

@@ -1,6 +1,7 @@
 ---
 import { QUICK_LINKS } from '../data/links';
 import { href } from '../lib/paths';
+import { SECTIONS, sectionFor } from './sections';
 
 interface MenuItem { label: string; url: string }
 interface MenuGroup { label: string; url?: string; items?: MenuItem[] }
@@ -10,6 +11,9 @@ const link = (url: string) => (/^https?:/.test(url) ? url : href(url));
 
 // Matches the current site's primary menu (spec; plan Task 15). The menu is code, not content.
 // MedFriend is its own top-level item: the one new menu entry (Noor, 2026-11-06).
+const current = sectionFor(Astro.url.pathname);
+const sectionOf = (label: string) => SECTIONS.find((s) => s.label === label)?.id;
+
 const menu: MenuGroup[] = [
   {
     label: 'Council',
@@ -56,16 +60,16 @@ const menu: MenuGroup[] = [
       <ul class="menu">
         {menu.map((group) =>
           group.items ? (
-            <li class="has-sub">
+            <li class="has-sub" data-section={sectionOf(group.label)} data-current={sectionOf(group.label) && sectionOf(group.label) === current ? '' : undefined}>
               <details>
-                <summary>{group.label}</summary>
+                <summary>{sectionOf(group.label) && <span class="swatch" aria-hidden="true"></span>}{group.label}</summary>
                 <ul class="submenu">
                   {group.items.map((item) => <li><a href={link(item.url)}>{item.label}</a></li>)}
                 </ul>
               </details>
             </li>
           ) : (
-            <li><a class="top-link" href={href(group.url ?? '/')}>{group.label}</a></li>
+            <li data-section={sectionOf(group.label)} data-current={sectionOf(group.label) && sectionOf(group.label) === current ? '' : undefined}><a class="top-link" href={href(group.url ?? '/')} aria-current={sectionOf(group.label) && sectionOf(group.label) === current ? 'page' : undefined}>{sectionOf(group.label) && <span class="swatch" aria-hidden="true"></span>}{group.label}</a></li>
           ),
         )}
       </ul>
