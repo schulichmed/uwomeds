@@ -1,10 +1,10 @@
 ---
+import PageHead from '../components/PageHead.astro';
 import Base from '../layouts/Base.astro';
 import EventsCalendar from '../components/EventsCalendar.astro';
 ---
 <Base title="Events calendar">
-  <h1>Events calendar</h1>
-  <p class="lead">Council and club events on both campuses. Approved room bookings appear here automatically.</p>
+  <PageHead title="Events calendar" lead="Council and club events on both campuses. Approved room bookings appear here automatically." />
   <p class="demo-note">Demo: the real site shows the council's Google Calendar here (with subscribe instructions). This month view is drawn by the page from sample events and the bookings approved in this browser.</p>
   <EventsCalendar />
 </Base>

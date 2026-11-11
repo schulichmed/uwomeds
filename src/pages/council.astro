@@ -1,10 +1,10 @@
 ---
+import PageHead from '../components/PageHead.astro';
 import Base from '../layouts/Base.astro';
 import { COUNCIL } from '../data/council';
 ---
 <Base title="Council members">
-  <h1>Council members</h1>
-  <p class="lead">Meet the members of the Hippocratic Council.</p>
+  <PageHead title="Council members" lead="Meet the members of the Hippocratic Council." />
 
   <ul class="org-row">
     {COUNCIL.map((m) => <li class="person"><span class="role">{m.role}</span>{m.name}</li>)}

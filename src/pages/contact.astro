@@ -1,12 +1,12 @@
 ---
+import PageHead from '../components/PageHead.astro';
 import Base from '../layouts/Base.astro';
 import PrivacyNotice from '../components/PrivacyNotice.astro';
 import { IT_CONTACT } from '../data/people';
 ---
 <Base title="Contact">
   <div id="contact-root">
-    <h1>Contact</h1>
-    <p class="lead">Questions for the Hippocratic Council.</p>
+    <PageHead title="Contact" lead="Questions for the Hippocratic Council." />
     <form id="contact-form" class="stack" novalidate>
       <div class="field"><label for="name">Your name</label><input type="text" id="name" autocomplete="name" /></div>
       <div class="field"><label for="email">Your email</label><input type="email" id="email" autocomplete="email" /></div>

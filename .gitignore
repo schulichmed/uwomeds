@@ -7,3 +7,5 @@ dist/
 .dev.vars
 test-results/
 playwright-report/
+.impeccable/mocks/
+.impeccable/review/

@@ -1,4 +1,5 @@
 ---
+import PageHead from '../components/PageHead.astro';
 import Base from '../layouts/Base.astro';
 import { COUNCIL_PAGES, type CouncilPage } from '../data/pages';
 import { renderMarkdown } from '../lib/markdown';
@@ -10,7 +11,7 @@ const { page } = Astro.props as { page: CouncilPage };
 ---
 <Base title={page.title}>
   <article id="council-page" data-slug={page.slug}>
-    <h1 id="page-title">{page.title}</h1>
+    <PageHead title={page.title} id="page-title" />
     <div id="page-tools" class="page-tools"></div>
     <div id="page-body"><Fragment set:html={renderMarkdown(page.body)} /></div>
   </article>

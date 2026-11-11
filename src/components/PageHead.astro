@@ -1,0 +1,21 @@
+---
+/**
+ * A section page's head (redesign look): the h1 and intro on a band in the section's colour, with the
+ * page's photo tipped in as a print that hangs over the band's lower edge.
+ * Pages without a photo (see photos.ts) get the band alone.
+ */
+import Print from './Print.astro';
+import { photoFor, type Photo } from './photos';
+
+interface Props { title: string; lead?: string; id?: string; photo?: Photo }
+const { title, lead, id, photo: chosen } = Astro.props;
+const photo = chosen ?? photoFor(Astro.url.pathname);
+---
+<header class:list={['page-head', { 'has-photo': photo }]}>
+  <div class="page-head-text">
+    <h1 id={id}>{title}</h1>
+    {lead && <p class="lead">{lead}</p>}
+    <slot />
+  </div>
+  {photo && <Print photo={photo} class="page-head-print" tape eager />}
+</header>
