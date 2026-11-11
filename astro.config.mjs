@@ -22,7 +22,12 @@ const securityHeaders = {
 export default defineConfig({
   site: 'https://uwomeds.pages.dev',
   output: 'static',
-  adapter: cloudflare(),
+  adapter: cloudflare({
+    // MedFriend's sign-in gate runs in src/worker.ts, in front of Astro (plan Task 26), so
+    // every request under /medfriend/ has to reach the Function, not the static files.
+    workerEntryPoint: { path: 'src/worker.ts' },
+    routes: { extend: { include: [{ pattern: '/medfriend' }, { pattern: '/medfriend/*' }] } },
+  }),
   trailingSlash: 'always',
   build: { format: 'directory' },
   integrations: [securityHeaders],

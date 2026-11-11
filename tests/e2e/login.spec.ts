@@ -1,49 +1,9 @@
 /**
  * Sign-in with an emailed code or link (plan Task 3). Needs the local Supabase stack
  * (`pnpm exec supabase start`), whose Mailpit inbox is read at http://127.0.0.1:54324.
- * Each test uses a fresh fake address, so tests never share an inbox or a rate limit.
  */
 import { expect, test, type Page } from '@playwright/test';
-
-const MAILPIT = process.env.MAILPIT_URL ?? 'http://127.0.0.1:54324';
-
-function fresh(domain = 'meds.uwo.ca'): string {
-  return `e2e-${Date.now()}-${Math.floor(Math.random() * 1e6)}@${domain}`;
-}
-
-interface Mail { code: string; link: string }
-
-async function latestMail(to: string): Promise<Mail> {
-  for (let i = 0; i < 40; i++) {
-    const res = await fetch(`${MAILPIT}/api/v1/search?query=${encodeURIComponent(`to:"${to}"`)}`);
-    const list = (await res.json()) as { messages?: { ID: string }[] };
-    if (list.messages?.length) {
-      const msg = (await (await fetch(`${MAILPIT}/api/v1/message/${list.messages[0].ID}`)).json()) as { HTML: string; Text: string };
-      const code = /\b(\d{6})\b/.exec(msg.Text || msg.HTML)?.[1] ?? '';
-      const link = (/href="([^"]*\/login\/confirm\/\?token_hash=[^"]+)"/.exec(msg.HTML)?.[1] ?? '').replace(/&amp;/g, '&');
-      return { code, link };
-    }
-    await new Promise((r) => setTimeout(r, 250));
-  }
-  throw new Error(`no email arrived for ${to}`);
-}
-
-async function mailCount(to: string): Promise<number> {
-  const res = await fetch(`${MAILPIT}/api/v1/search?query=${encodeURIComponent(`to:"${to}"`)}`);
-  return ((await res.json()) as { messages_count?: number }).messages_count ?? 0;
-}
-
-async function requestCode(page: Page, email: string): Promise<void> {
-  await page.goto('/login/');
-  await page.getByLabel('Western email').fill(email);
-  await page.getByRole('button', { name: 'Email me a code' }).click();
-  await expect(page).toHaveURL(/\/login\/code\//);
-}
-
-async function enterCode(page: Page, code: string): Promise<void> {
-  await page.getByLabel('6-digit code').fill(code);
-  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-}
+import { enterCode, fresh, latestMail, mailCount, requestCode } from './helpers';
 
 const signOutButton = (page: Page) => page.getByRole('button', { name: 'Sign out' });
 

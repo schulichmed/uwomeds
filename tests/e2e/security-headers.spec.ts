@@ -34,7 +34,7 @@ test('no inline script in dist', () => {
 });
 
 // Each later task that adds a page adds it here.
-const PAGES = ['/', '/login/', '/clubs/', '/calendar/', '/contact/', '/room-booking/'];
+const PAGES = ['/', '/login/', '/clubs/', '/calendar/', '/contact/', '/room-booking/', '/medfriend/'];
 
 test('no CSP violations', async ({ page }) => {
   const violations: string[] = [];
