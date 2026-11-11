@@ -1,0 +1,12 @@
+---
+// What a signed-out visitor sees at /medfriend/ (the gate serves this page there). No course
+// content: only what MedFriend is and how to get in.
+import Base from '../layouts/Base.astro';
+---
+<Base title="MedFriend" description="MedFriend: student-made study tools for Schulich medical students.">
+  <h1>MedFriend</h1>
+  <p class="lead">Study tools made by Schulich medical students, for Schulich medical students: practice questions, notes and Anki decks for each block.</p>
+  <p>MedFriend is student-made. It is not official Schulich curriculum or medical advice.</p>
+  <p class="button-row"><a class="button" href="/login/?next=%2Fmedfriend%2F">Sign in with your Western email</a></p>
+  <p class="muted">Use your @meds.uwo.ca or @uwo.ca address. We email you a code; there is no password.</p>
+</Base>

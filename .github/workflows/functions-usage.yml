@@ -1,0 +1,60 @@
+# Daily check that MedFriend's sign-in gate stays under Cloudflare's free 100,000 Function
+# requests a day (plan Task 26). Over 80,000 it opens an issue "MedFriend near the free
+# request limit" (once; it comments on that issue on later days instead).
+# Needs the CLOUDFLARE_ANALYTICS_TOKEN secret (Account Analytics: Read only) and
+# CLOUDFLARE_ACCOUNT_ID; until they exist it skips. GitHub runs schedules only from the
+# default branch, so this file is also on `main`; it always runs the script from `build`.
+name: Functions usage
+
+on:
+  schedule:
+    - cron: '0 13 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      READY: ${{ secrets.CLOUDFLARE_ANALYTICS_TOKEN != '' && secrets.CLOUDFLARE_ACCOUNT_ID != '' }}
+    steps:
+      - if: env.READY != 'true'
+        run: echo "::notice::Usage check skipped. Add CLOUDFLARE_ANALYTICS_TOKEN (Account Analytics Read) in Settings > Secrets and variables > Actions."
+      - if: env.READY == 'true'
+        uses: actions/checkout@v7.0.1
+        with:
+          ref: build
+      - if: env.READY == 'true'
+        uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 22
+      - if: env.READY == 'true'
+        id: usage
+        env:
+          CLOUDFLARE_ANALYTICS_TOKEN: ${{ secrets.CLOUDFLARE_ANALYTICS_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set +e
+          node scripts/check-functions-usage.mjs | tee usage.txt
+          code=${PIPESTATUS[0]}
+          if [ "$code" = 3 ]; then echo "over=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+          exit "$code"
+      - if: steps.usage.outputs.over == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TITLE: MedFriend near the free request limit
+        run: |
+          existing=$(gh issue list --state open --search "\"$TITLE\" in:title" --json number --jq '.[0].number')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body-file usage.txt
+          else
+            {
+              cat usage.txt
+              echo
+              echo "Over 100,000 the gate stops serving MedFriend for the rest of the day (the project fails closed). See plan Task 26."
+            } > body.md
+            gh issue create --title "$TITLE" --body-file body.md
+          fi

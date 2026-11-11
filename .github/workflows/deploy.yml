@@ -52,12 +52,41 @@ jobs:
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
         run: |
-          pnpm exec supabase link --project-ref "$SUPABASE_PROJECT_REF" --password "$SUPABASE_DB_PASSWORD"
-          pnpm exec supabase db push --password "$SUPABASE_DB_PASSWORD"
+          # Not `supabase link`: it reads the project's API keys, secret key included, and the
+          # access token is deliberately not allowed to. The token only looks up the pooler
+          # address (Connection Pooling: Read); the password does the rest. Session mode
+          # (port 5432), because GitHub's runners have no IPv6 for the direct address.
+          pooler=$(curl -fsS -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN"             "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/config/database/pooler")
+          host=$(jq -r '[.[] | select(.database_type == "PRIMARY")][0].db_host // .[0].db_host' <<<"$pooler")
+          user=$(jq -r '[.[] | select(.database_type == "PRIMARY")][0].db_user // .[0].db_user' <<<"$pooler")
+          pass=$(jq -rn --arg p "$SUPABASE_DB_PASSWORD" '$p|@uri')
+          echo "::add-mask::$pass"
+          test -n "$host" && test "$host" != null
+          pnpm exec supabase db push --db-url "postgresql://$user:$pass@$host:5432/postgres"
 
       - name: Build
         if: env.READY == 'true'
         run: pnpm build
+
+      # MedFriend becomes part of the site (plan Task 25). A read-only copy of the public
+      # repo, without the Anki decks (over Pages' 25 MiB limit; they stay on GitHub Pages
+      # until the R2 bucket exists) or the authoring tools. The repo itself isn't changed.
+      - name: Check out MedFriend
+        if: env.READY == 'true'
+        uses: actions/checkout@v7.0.1
+        with:
+          repository: ${{ vars.MEDFRIEND_REPO || 'schulichmed/preclerkship' }}
+          path: medfriend-src
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !*.apkg
+            !/tools/
+
+      - name: Copy MedFriend into the site
+        if: env.READY == 'true'
+        run: node scripts/prepare-medfriend.mjs medfriend-src dist/medfriend
 
       - name: Sync runtime secrets to Pages
         if: env.READY == 'true'

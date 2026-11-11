@@ -24,3 +24,24 @@ from unnest(array[
   'community@meds.uwo.ca',
   'hippoit@uwo.ca'
 ]) as e;
+
+-- Fake clubs (plan Tasks 4 and 5). student1 is on the Fake Surgery Club roster, student2 on
+-- the Fake Peds Club roster (a club with no links).
+insert into public.clubs (slug, name, description, campuses, categories) values
+  ('fake-surgery-club', 'Fake Surgery Club', 'A fake club for local testing.', '{london}', '{interest}'),
+  ('fake-peds-club', 'Fake Peds Club', 'A fake club with no links.', '{windsor}', '{interest}'),
+  ('fake-wellness-club', 'Fake Wellness Club', 'A fake club on both campuses.', '{london,windsor}', '{recreational}');
+insert into public.club_links (club_id, position, url)
+select id, 1, 'https://www.instagram.com/fakesurgeryclub/' from public.clubs where slug = 'fake-surgery-club'
+union all
+select id, 2, 'https://www.facebook.com/fakesurgeryclub' from public.clubs where slug = 'fake-surgery-club'
+union all
+select id, 1, 'https://example.com/fake-wellness' from public.clubs where slug = 'fake-wellness-club';
+insert into public.club_execs (club_id, name, role_title, email, is_president, show_contact)
+select id, 'Sample President', 'President', 'student1@meds.uwo.ca', true, true from public.clubs where slug = 'fake-surgery-club'
+union all
+select id, 'Sample Treasurer', 'Treasurer', 'student2@meds.uwo.ca', false, false from public.clubs where slug = 'fake-surgery-club';
+insert into public.club_roster (club_id, email, exec_name, role_title)
+select id, 'student1@meds.uwo.ca', 'Sample President', 'President' from public.clubs where slug = 'fake-surgery-club'
+union all
+select id, 'student2@meds.uwo.ca', 'Sample Peds Exec', 'President' from public.clubs where slug = 'fake-peds-club';

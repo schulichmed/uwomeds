@@ -1,41 +1,56 @@
 ---
+// A club's page (plan Task 5), from the clubs database. Its own execs also see edit links.
+export const prerender = false;
 import Base from '../../../layouts/Base.astro';
-import { CLUBS } from '../../../data/clubs';
+import { canEditClub, getClub, instagramEmbedEnabled, setClubPageCache } from '../../../lib/clubs';
 import { clubPageHtml } from '../../../lib/render-club';
+import { createServerClient } from '../../../lib/supabase';
 import { href } from '../../../lib/paths';
-import type { Club } from '../../../lib/types';
 
-export function getStaticPaths() {
-  return CLUBS.map((club) => ({ params: { slug: club.slug }, props: { club } }));
-}
-const { club } = Astro.props as { club: Club };
+const supabase = createServerClient(Astro);
+const club = await getClub(supabase, Astro.params.slug ?? '', Astro.locals.runtime?.env?.SUPABASE_URL);
+const [isOwnExec, instagramEmbed] = club
+  ? await Promise.all([
+      Astro.locals.user ? canEditClub(supabase, club.id) : Promise.resolve(false),
+      instagramEmbedEnabled(supabase),
+    ])
+  : [false, false];
+if (!club) Astro.response.status = 404;
+setClubPageCache(Astro.response.headers, !!Astro.locals.user);
 ---
+{!club ? (
+<Base title="Club not found">
+  <h1>Club not found</h1>
+  <p>There's no club at this address. It may have been renamed or archived. Try the <a href={href('/clubs/')}>club directory</a>.</p>
+</Base>
+) : (
 <Base title={club.name}>
   <p class="muted"><a href={href('/clubs/')}>Club directory</a> / {club.name}</p>
   <h1>{club.name}</h1>
-  <div id="club-body" data-slug={club.slug}>
-    <Fragment set:html={clubPageHtml(club, false)} />
+  <div id="club-body">
+    <Fragment set:html={clubPageHtml(club, { isOwnExec, instagramEmbed })} />
   </div>
 </Base>
+)}
 
 <script>
-  import { esc } from '../../../lib/escape';
-  import { href } from '../../../lib/paths';
-  import { clubPageHtml } from '../../../lib/render-club';
-  import { canEditClub, getClub, getSession } from '../../../lib/store';
-
-  const body = document.getElementById('club-body') as HTMLElement;
-  const slug = body.dataset.slug ?? '';
-  const club = getClub(slug);
-  const isOwnExec = canEditClub(getSession(), slug);
-  if (club) body.innerHTML = clubPageHtml(club, isOwnExec);
-
-  body.addEventListener('click', (ev) => {
+  // Instagram loads only after the visitor asks for it.
+  document.getElementById('club-body')?.addEventListener('click', (ev) => {
     const button = (ev.target as HTMLElement).closest<HTMLButtonElement>('[data-ig-toggle]');
-    if (!button) return;
     const panel = document.getElementById('ig-panel');
-    if (!panel) return;
+    if (!button || !panel) return;
+    const handle = button.dataset.igToggle ?? '';
+    if (!/^[A-Za-z0-9._]+$/.test(handle)) return;
     const open = button.getAttribute('aria-expanded') === 'true';
+    if (!open && !panel.querySelector('iframe')) {
+      const frame = document.createElement('iframe');
+      frame.src = `https://www.instagram.com/${handle}/embed/`;
+      frame.title = `Recent Instagram posts from @${handle}`;
+      frame.loading = 'lazy';
+      frame.width = '100%';
+      frame.height = '480';
+      panel.appendChild(frame);
+    }
     panel.hidden = open;
     button.setAttribute('aria-expanded', String(!open));
     button.textContent = open ? 'Show recent Instagram posts' : 'Hide recent Instagram posts';

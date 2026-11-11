@@ -350,7 +350,9 @@ main:has(.page-head) { border-top: 0; }
 .ig-card { border: 1px solid var(--n3); border-radius: 12px; padding: 16px; max-width: 440px; background: var(--n1); }
 .ig-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; color: var(--purple); }
 .ig-head div { color: var(--text); }
-.ig-panel { margin-top: 12px; border: 2px dashed var(--purple-line); border-radius: var(--radius); padding: 12px; background: #fff; min-height: 120px; }
+.ig-panel { margin-top: 12px; }
+.ig-panel iframe { display: block; width: 100%; max-width: 540px; border: 0; border-radius: var(--radius); background: #fff; }
+.club-logo { display: block; width: 120px; height: 120px; object-fit: contain; margin-bottom: 12px; border-radius: 12px; }
 .exec-grid { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
 .exec { display: flex; gap: 12px; align-items: flex-start; border: 1px solid var(--n3); border-radius: 12px; padding: 12px 14px; overflow-wrap: anywhere; max-width: none; }
 .avatar { flex: none; width: 42px; height: 42px; border-radius: 50%; background: var(--purple); color: #fff; font-weight: 750; font-stretch: 110%; display: grid; place-items: center; }
