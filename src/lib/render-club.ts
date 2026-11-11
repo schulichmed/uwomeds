@@ -1,6 +1,6 @@
 /**
- * HTML for club cards and club pages, rendered on the server from the clubs database
- * (plan Task 5). Every value is escaped here.
+ * HTML for club cards and club pages. Shared by the build (seed data) and the
+ * browser (re-render from localStorage after an exec saves), so both look the same.
  */
 import { esc } from './escape';
 import { href } from './paths';
@@ -43,22 +43,9 @@ export function clubCardHtml(club: Club): string {
 </li>`;
 }
 
-export interface ClubPageOptions {
-  /** The signed-in user edits this club (on its roster) or is a club admin. */
-  isOwnExec: boolean;
-  /** site_settings.instagram_embed_enabled */
-  instagramEmbed: boolean;
-}
-
-/** One icon link per club link, and an Instagram profile card. Nothing loads from Instagram
- *  until "Show recent Instagram posts" is pressed (src/pages/clubs/[slug]/index.astro). */
-function socialsHtml(club: Club, opts: ClubPageOptions): string {
+function socialsHtml(club: Club): string {
   const links = club.links.filter(Boolean);
-  if (!links.length) {
-    return opts.isOwnExec
-      ? `<section class="club-socials" aria-labelledby="socials-h"><h2 id="socials-h">Find us online</h2><p class="notice"><a href="${href(`/clubs/${club.slug}/edit/`)}">Add your club's socials</a></p></section>`
-      : '';
-  }
+  if (!links.length) return '';
   const icons = links
     .map((url) => {
       const network = detectNetwork(url);
@@ -66,14 +53,13 @@ function socialsHtml(club: Club, opts: ClubPageOptions): string {
     })
     .join('');
   const handle = links.map(instagramHandle).find((h): h is string => !!h);
-  const embed = opts.instagramEmbed && handle
-    ? `<button type="button" class="button secondary" data-ig-toggle="${esc(handle)}" aria-expanded="false" aria-controls="ig-panel">Show recent Instagram posts</button>
-  <div id="ig-panel" class="ig-panel" hidden></div>`
-    : '';
   const card = handle
     ? `<div class="ig-card">
   <div class="ig-head">${networkIcon('instagram')}<div><strong>@${esc(handle)}</strong><br><a href="https://www.instagram.com/${esc(handle)}/" rel="noopener">Open on Instagram</a></div></div>
-  ${embed}
+  <button type="button" class="button secondary" data-ig-toggle aria-expanded="false" aria-controls="ig-panel">Show recent Instagram posts</button>
+  <div id="ig-panel" class="ig-panel" hidden>
+    <p><strong>Demo:</strong> on the real site, Instagram's free profile embed (about six recent posts from @${esc(handle)}) loads here, only after this button is clicked. Nothing is loaded from Instagram in this demo.</p>
+  </div>
 </div>`
     : '';
   return `<section class="club-socials" aria-labelledby="socials-h"><h2 id="socials-h">Find us online</h2><ul class="social-list">${icons}</ul>${card}</section>`;
@@ -94,22 +80,18 @@ function execsHtml(club: Club): string {
   return `<section aria-labelledby="execs-h"><h2 id="execs-h">Executive team</h2><ul class="exec-grid">${items}</ul></section>`;
 }
 
-/** The body of a club page: logo, description, socials, execs, announcements. */
-export function clubPageHtml(club: Club & { announcements?: string; logoUrl?: string | null }, opts: ClubPageOptions): string {
+/** The body of a club page. `isOwnExec` adds the edit button and the empty-page nudge. */
+export function clubPageHtml(club: Club, isOwnExec: boolean): string {
   const editUrl = href(`/clubs/${club.slug}/edit/`);
+  const missing = !club.description.trim() || !club.links.length;
   const nudge =
-    opts.isOwnExec && !club.description.trim()
-      ? `<div class="notice"><a href="${editUrl}">Add your club's description</a></div>`
+    isOwnExec && missing
+      ? `<div class="notice"><a href="${editUrl}">Add your club's description and socials</a></div>`
       : '';
-  const edit = opts.isOwnExec ? `<p><a class="button" href="${editUrl}">Edit this club</a></p>` : '';
-  const logo = club.logoUrl ? `<img class="club-logo" src="${esc(club.logoUrl)}" alt="${esc(club.name)} logo" width="120" height="120">` : '';
-  const news = club.announcements?.trim()
-    ? `<section class="club-announcements" aria-labelledby="news-h"><h2 id="news-h">Announcements</h2>${paragraphs(club.announcements)}</section>`
-    : '';
-  return `${logo}<p class="badges">${campusBadges(club)} ${categoryBadge(club)}</p>
+  const edit = isOwnExec ? `<p><a class="button" href="${editUrl}">Edit this club</a></p>` : '';
+  return `<p class="badges">${campusBadges(club)} ${categoryBadge(club)}</p>
 ${edit}${nudge}
 ${club.description.trim() ? `<section class="club-description">${paragraphs(club.description)}</section>` : ''}
-${socialsHtml(club, opts)}
-${execsHtml(club)}
-${news}`;
+${socialsHtml(club)}
+${execsHtml(club)}`;
 }
