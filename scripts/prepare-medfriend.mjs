@@ -11,7 +11,9 @@
  *     to https://uwomeds.com/medfriend/);
  *   - Anki deck links point to the decks on schulichmed.github.io until the R2 bucket exists
  *     (plan Task 0B); their paths and SHA-256 are returned for that later sync;
- *   - the Cloudflare Web Analytics beacon is removed (the site has no analytics).
+ *   - the Cloudflare Web Analytics beacon is removed (the site has no analytics);
+ *   - progress syncs to the uwomeds.com account (public/medfriend-account.js) instead of
+ *     Firebase, whose config is removed (plan Task 27).
  */
 import { createHash } from 'node:crypto';
 import { copyFileSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
@@ -34,6 +36,7 @@ export const SITE_BAR = `<nav class="uwomeds-bar" aria-label="uwomeds.com"><a cl
   ([label, url]) => `<li><a href="${url}"${label === 'MedFriend' ? ' aria-current="page"' : ''}>${label}</a></li>`,
 ).join('')}</ul></nav>`;
 const BAR_CSS = '<link rel="stylesheet" href="/medfriend-bar.css">';
+const ACCOUNT_JS = '<script src="/medfriend-account.js"></script>';
 
 function skip(rel) {
   const parts = rel.split('/');
@@ -63,6 +66,10 @@ export function rewriteHtml(html, relPath) {
       const target = href.startsWith('/medfriend/') ? href.slice('/medfriend/'.length) : posix.normalize(posix.join(dir, href));
       return `${a}${OLD_ORIGIN}${target}${b}`;
     });
+  // Progress syncs to the uwomeds.com account, not Firebase (plan Task 27): drop the Firebase
+  // config and load the account storage before sync.js.
+  out = out.replace(/(<script>\s*window\.PORTAL_SYNC_CFG\s*=\s*\{)\s*"firebase"\s*:\s*\{[^{}]*\}\s*,?\s*/, '$1');
+  out = out.replace(/<script>\s*window\.PORTAL_SYNC_CFG\s*=/, `${ACCOUNT_JS}\n$&`);
   out = out.includes('</head>') ? out.replace('</head>', `${BAR_CSS}\n</head>`) : out;
   out = out.replace(/<body([^>]*)>/, `<body$1>\n${SITE_BAR}`);
   return out;

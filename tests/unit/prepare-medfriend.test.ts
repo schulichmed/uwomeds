@@ -23,7 +23,7 @@ describe('prepareMedfriend', () => {
     expect(existsSync(join(dest, 'tools'))).toBe(false);
     expect(existsSync(join(dest, '.github'))).toBe(false);
     expect(existsSync(join(dest, '.env'))).toBe(false);
-    expect(copied).toBe(6);
+    expect(copied).toBe(8);
     expect(decks).toEqual([{ path: 'fom/anki/b1.apkg', sha256: expect.stringMatching(/^[0-9a-f]{64}$/) }]);
   });
 
@@ -33,6 +33,19 @@ describe('prepareMedfriend', () => {
     mkdirSync(join(src, 'big'), { recursive: true });
     writeFileSync(join(src, 'big/huge.pdf'), Buffer.alloc(26 * 1024 * 1024));
     expect(() => prepareMedfriend(src, tmp())).toThrow('file over 25 MiB: big/huge.pdf');
+  });
+
+  it('swaps Firebase for the uwomeds.com account on pages that sync', () => {
+    const dest = tmp();
+    prepareMedfriend(FIXTURE, dest);
+    const quiz = readFileSync(join(dest, 'fom/quiz.html'), 'utf8');
+    expect(quiz).not.toMatch(/firebase|fake-key/i);
+    expect(quiz).toContain('window.PORTAL_SYNC_CFG = {"stores": ["nsq.fake.v1."]}');
+    // The account storage loads before sync.js reads it.
+    expect(quiz.indexOf('/medfriend-account.js')).toBeGreaterThan(-1);
+    expect(quiz.indexOf('/medfriend-account.js')).toBeLessThan(quiz.indexOf('sync.js?v=1'));
+    // Pages without sync are left alone.
+    expect(readFileSync(join(dest, 'fom/b1.html'), 'utf8')).not.toContain('/medfriend-account.js');
   });
 
   it('rewrites pages: site bar, links, decks, no analytics', () => {

@@ -2,25 +2,12 @@
  *  the fake MedFriend in tests/fixtures/medfriend-fake to dist/medfriend before these run.
  *  The signed-in tests need the local Supabase stack. */
 import { existsSync } from 'node:fs';
-import { expect, test, type Page } from '@playwright/test';
-import { finishSignIn, fresh, mailCount, requestCode, submitEmail } from './helpers';
+import { expect, test } from '@playwright/test';
+import { finishSignIn, fresh, mailCount, requestCode, signInThrough } from './helpers';
 
 test.skip(!existsSync('dist/medfriend/index.html'), 'run scripts/prepare-medfriend.mjs first');
 
 const NO_STORE = 'private, no-store';
-
-/** Open a MedFriend page signed out, sign in from the redirect, and pass the notice. */
-async function signInThrough(page: Page, path: string, email: string): Promise<void> {
-  await page.goto(path);
-  // The MedFriend root shows the landing page instead of redirecting.
-  if (/^\/medfriend\/?$/.test(path)) await page.getByRole('link', { name: 'Sign in with your Western email' }).click();
-  await expect(page).toHaveURL(/\/login\/\?next=/);
-  const before = await mailCount(email);
-  await submitEmail(page, email);
-  await finishSignIn(page, email, before);
-  await expect(page).toHaveURL(/\/medfriend-notice\/\?next=/);
-  await page.getByRole('button', { name: 'I understand' }).click();
-}
 
 test('landing', async ({ page, request }) => {
   const res = await request.get('/medfriend/', { maxRedirects: 0 });
